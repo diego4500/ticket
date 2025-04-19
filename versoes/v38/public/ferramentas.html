@@ -1,0 +1,44 @@
+<div class="containerRelatorio">
+  <div class="flex">
+    <h1 class="tituloH">Ferramentas</h1>
+  <a href="https://grafana.locsis.com/d/a81e743d-1aef-4426-9e7d-5022e93997d5/locsis-dados-por-tenant?orgId=1&inspect=1" target="_blank"><p class="grafana">Grafana</p></a>
+  </div>
+
+  <div class="flexB">
+
+      <div class="form-flex-container">
+          <form id="formAlterar" class="form-flex">
+              <div class="flexD">
+                  <div class="alterarCliente">
+                      <label for="tenant">Alterar para Cliente:</label>
+                      <input type="text" id="tenant" required autocomplete="off" placeholder="Digite a razão social*" required />
+                  </div>
+                  <div>
+                      <label for="arquivo">Nome Fantasia:</label>
+                      <div class="sugestoes-container">
+                          <input type="text" id="nome_fantasia"  autocomplete="off" placeholder="Digite o nome fantasia" 
+                              autocomplete="off" />
+                          <div id="sugestoesB" class="sugestoes-lista"></div>
+                      </div>
+                  </div>
+
+              </div>
+              <div class="flexF">
+                  <div class="check">
+                      <label for="cliente">Cliente:</label>
+                      <input type="checkbox" id="cliente">
+                  </div>
+                  <button class="alterar" type="submit">Alterar</button>
+              </div>
+          </form>
+      </div>
+
+      <form id="formUpload" enctype="multipart/form-data" class="formFlex">
+          <label for="arquivo">Atualizar Tenants, selecione um arquivo:</label>
+          <div class="flexC">
+              <input type="file" id="arquivo" name="arquivo" required />
+              <button type="submit">Enviar</button>
+          </div>
+      </form>
+  </div>
+</div>

@@ -1,0 +1,788 @@
+/* styles.css */
+
+
+
+
+body,
+html {
+    font-family: Arial, sans-serif;
+    background-color: #F5F5F5;
+    margin: 0;
+    padding: 0px;
+    height: 100%;
+
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.flexC {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    align-items: flex-end;
+    /* ⬅️ alinha tudo à direita */
+
+}
+
+#arquivo{
+    width: 345px;
+}
+
+.flexD {
+    display: flex;
+
+    width: 100%;
+    align-items: flex-end;
+    /* ⬅️ alinha tudo à direita */
+    padding-left: 20px;
+}
+
+
+
+.flexF {
+    display: flex;
+    justify-content: flex-end;
+    /* alinha o conteúdo ao lado direito */
+    width: 100%;
+    align-items: center;
+    /* alinha verticalmente ao centro */
+}
+
+.check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    /* espaço entre label e checkbox */
+}
+
+.centro div {
+    width: auto;
+}
+
+
+.alterar {
+    margin-left: 20px !important;
+}
+
+.content {
+    width: 100%;
+    height: auto;
+    display: flex;
+    flex-direction: column; /* ← adiciona essa linha */
+    justify-content: center;
+    align-items: center;    /* centraliza os filhos no eixo horizontal */
+    margin-top: 25px;
+    margin-bottom: 40px;
+}
+
+
+#tabela-relatorio {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    /* centraliza horizontalmente */
+    align-items: center;
+    /* centraliza verticalmente */
+}
+
+#mensagem-relatorio {
+    text-align: center;
+    /* centraliza o conteúdo interno */
+}
+
+
+.centro {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    margin-top: 10px;
+    margin-bottom: 18px;
+    flex: 1;
+    /* Adicionado para ocupar o espaço restante */
+}
+
+.tituloH {
+    text-align: left;
+    font-size: 25px;
+}
+
+.container {
+    max-width: 1024px;
+    width: 100%;
+    background: white;
+    padding: 10px 50px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    margin-top: 5px;
+}
+
+.containerRelatorio {
+    min-width: 1024px;
+    max-width: 1250px;
+    width: 100%;
+    background: white;
+    padding: 10px 5px;
+    
+    
+    margin-top: 5px;
+}
+
+.containerB {
+    max-width: 90%;
+    width: 100%;
+    background: white;
+    padding: 10px 50px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    margin-top: 5px;
+}
+
+.cliente-card {
+    display: flex;
+    align-items: center;
+    /* Alinha verticalmente */
+    gap: 10px;
+    /* Espaço entre os elementos */
+}
+
+.cnpj {
+    flex: 1;
+    /* Faz a div do CNPJ ocupar o espaço restante */
+}
+
+.check {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    /* Espaço entre o label e o checkbox */
+    margin-right: 50px;
+    margin-bottom: 15px;
+}
+
+.check input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+    transform: scale(1.5);
+}
+
+.flex {
+    display: flex;
+    gap: 20px;
+    /* espaço entre os elementos */
+    flex-wrap: wrap;
+    /* para responsividade */
+}
+
+.flexB {
+    display: flex;
+    gap: 20px;
+
+
+    justify-content: flex-end;
+    align-items: flex-start;
+}
+
+
+
+
+.filho {
+    flex: 1;
+    /* faz os filhos dividirem o espaço igualmente */
+    min-width: 200px;
+    /* impede que fiquem muito estreitos em telas pequenas */
+    margin-right: 5px;
+    margin-left: 5px;
+}
+
+
+
+h1 {
+    color: #2C34C9;
+    margin: 0;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+
+}
+
+label {
+    font-weight: bold;
+    text-align: left;
+    display: block;
+    color: #7e7d7d;
+    font-size: 14px;
+}
+
+input,
+select,
+textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+button {
+    background-color: #2C34C9;
+    width: 150px;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 10px;
+    margin-left: 5px;
+}
+
+button:hover {
+    background-color: #181D77;
+}
+
+
+
+.menu {
+    padding: 0;
+}
+
+
+
+#sugestoes {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: white;
+    border: 1px solid #ccc;
+    display: none;
+    max-height: 200px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+
+}
+.grafana{
+    margin: 8px;
+    color: #581ea5;
+}
+
+a {
+    text-decoration: none;
+  }
+
+#sugestoes div {
+    padding: 8px;
+    cursor: pointer;
+    text-align: left;
+    /* Alinha o texto das sugestões à esquerda */
+    font-size: 14px;
+    width: 100%;
+    /* Garante que as sugestões ocupem toda a largura da div pai */
+}
+
+#sugestoesB {
+    position: absolute;
+    top: 100%;
+    left: -351px;
+    background: white;
+    border: 1px solid #ccc;
+    display: none;
+    max-height: 500px;
+    min-width: 850px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+  }
+
+  #sugestoesB div {
+    padding: 8px;
+    cursor: pointer;
+  }
+  
+  #sugestoesB div:hover {
+    background-color: #f0f0f0;
+  }
+
+#sugestoes div:hover {
+    background: #f0f0f0;
+    /* Adiciona um efeito ao passar o mouse */
+}
+
+#descricao {
+    height: 110px;
+    /* Ajuste conforme necessário */
+    width: 100%;
+    /* Garante que ocupe toda a largura disponível */
+    resize: vertical;
+    /* Permite que o usuário ajuste manualmente */
+    font-family: Arial, sans-serif;
+}
+
+.sugestoes-lista {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: white;
+    border: 1px solid #ccc;
+    display: none;
+    max-height: 400px;
+    min-width: 400px;
+    overflow-y: auto;
+    z-index: 1000;
+  }
+
+  .sugestoes-lista div {
+    padding: 8px;
+    cursor: pointer;
+  }
+
+  .sugestoes-lista div:hover {
+    background-color: #f0f0f0;
+  }
+
+.sugestoes-container {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+}
+
+.botao-desativado {
+    background-color: #4a4a4a;
+    /* Cinza escuro */
+    color: white;
+    cursor: not-allowed;
+    /* Mostra que o botão está desativado */
+    opacity: 0.6;
+    /* Deixa o botão visualmente desativado */
+    pointer-events: none;
+    /* Impede qualquer clique no botão */
+}
+
+#sugestoesMenu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: white;
+    border: 1px solid #ccc;
+    display: none;
+    max-height: 200px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+
+}
+
+#sugestoesMenu div {
+    padding: 8px;
+    cursor: pointer;
+    text-align: left;
+    font-size: 14px;
+    width: 100%;
+}
+
+#sugestoesMenu div:hover {
+    background: #f0f0f0;
+}
+
+
+
+
+.novo_fechar {
+    display: none;
+}
+
+/* botao ler */
+
+.ler {
+    background-color: #007bff;
+    color: white;
+    padding: 10px;
+
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-bottom: 15px;
+    width: 100px !important;
+    /* Define uma largura fixa */
+    text-align: center;
+}
+
+.ler:hover {
+    background-color: #61a3eb;
+}
+
+.botao_ler {
+    display: flex;
+    justify-content: flex-start;
+    /* Alinha o conteúdo à esquerda */
+}
+
+.texto-oculto {
+    display: none;
+    /* Oculta as divs inicialmente */
+    background-color: #f8f9fa;
+    border: 1px solid #ccc;
+    padding: 15px;
+    width: 300px;
+    position: fixed;
+    /* Fixa a div na tela */
+    left: 20px;
+    /* Mantém no lado esquerdo */
+    top: 100px;
+    /* Mantém no topo da tela */
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+    font-size: 16px;
+    border-radius: 5px;
+    text-align: left;
+    z-index: 1000;
+    /* Garante que fique sobre os outros elementos */
+}
+
+#fecharTexto,
+#fecharDuvida {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 5px;
+    margin-top: 10px;
+    display: block;
+    /* Faz o botão ocupar toda a largura disponível */
+    text-align: left;
+    /* Alinha o texto dentro do botão à esquerda */
+}
+
+#fecharTexto:hover,
+#fecharDuvida:hover {
+    background-color: #61a3eb;
+}
+
+.sugestoes-container-botoes {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+    /* permite quebrar linha se não couber */
+}
+
+.botao-cadastrar {
+    padding: 6px 12px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+/* CSS da Navbar */
+
+nav {
+    width: 100%;
+    height: auto;
+    min-height: 60px;
+    /* ainda garante altura mínima */
+    background-color: #2C34C9;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    /* ISSO JÁ FUNCIONA PARA EXTREMOS */
+
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    z-index: 999;
+
+}
+
+
+
+.botao_menu {
+    background-color: #2C34C9;
+    width: auto;
+    color: white;
+    font-weight: 500;
+    padding: 21px 30px;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 16px;
+    border: none;
+    transition: background-color 0.3s;
+    margin: 0px;
+    border: none;
+    text-decoration: none;
+
+
+}
+
+.botao_menu:hover {
+    background-color: #181D77;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+}
+
+.botoes_flex {
+    display: flex;
+    gap: 0px;
+    /* espaço entre os botões, ajuste se quiser colado (use 0) */
+    justify-content: flex-start;
+    /* ou center, se quiser centralizado */
+    flex-wrap: wrap;
+    /* quebra linha em telas menores */
+    justify-content: flex-end;
+    /* <-- alinha os botões à direita */
+    margin-top: 10px;
+}
+
+.menu {
+
+    height: 100%;
+    display: flex;
+    padding: 0;
+    gap: 0;
+    /* remove espaço entre os botões */
+}
+
+.logo img {
+    width: 200px;
+    height: 40px;
+    object-fit: contain;
+    /* mantém a proporção sem esticar */
+}
+
+/* Rodapé */
+
+footer {
+    width: 100%;
+    background-color: #2C34C9;
+    /* mesma cor da navbar */
+    color: white;
+    text-align: center;
+    padding: 15px 0;
+
+    z-index: 999;
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.footer-content {
+    font-size: 14px;
+
+}
+
+
+.div-imagem {
+    text-align: center;
+    padding: 10px;
+}
+
+.div-imagem img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Estilo da Tabela */
+
+table.tabela-relatorio {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background-color: #fff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+    font-size: 14px;
+}
+
+table.tabela-relatorio th {
+    background-color: #2C34C9;
+    color: white;
+    padding: 12px 8px;
+    text-align: left;
+    border-bottom: 2px solid #ddd;
+}
+
+table.tabela-relatorio td {
+    padding: 10px 8px;
+    border-bottom: 1px solid #eee;
+    color: #333;
+}
+
+table.tabela-relatorio tr:hover {
+    background-color: #f9f9f9;
+}
+
+table.tabela-relatorio td:last-child,
+table.tabela-relatorio th:last-child {
+    white-space: nowrap;
+}
+
+table.tabela-relatorio th {
+    text-transform: capitalize;
+}
+
+table.tabela-relatorio td {
+    text-transform: capitalize;
+}
+
+.form-flex-container {
+    min-width: 400px;
+    display: flex;
+    justify-content: flex-end;
+    margin-right: 43px;
+}
+
+.alterarCliente{
+    margin-right: 30px;
+}
+
+.form-flex {
+    min-width: 451px;
+}
+
+
+.formFlex {
+    width: 370px;
+    display: flex;
+}
+
+#tenant {
+    padding: 12px 9px 12px 9px;
+    width: 300px !important;
+}
+
+.botao-link {
+    background-color: #4caf50;
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  
+  .botao-link:hover {
+    background-color: #6ceb70;
+  }
+  
+  .botao-desativado {
+    background-color: #4a4a4a; /* Cinza escuro */
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    font-size: 13px;
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  /* Modal do relatório */
+
+  .modal-locsis {
+    position: fixed;
+    z-index: 1001;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .modal-locsis-conteudo {
+    background: white;
+    width: 600px;
+    max-width: 95%;
+    border-radius: 8px;
+    padding: 0;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+  }
+  
+  .modal-locsis-header {
+    background: #2C34C9;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .modal-locsis-header h2 {
+    margin: 0;
+    font-size: 20px;
+    color: #ffffff;
+  }
+  
+  .modal-locsis-fechar {
+    font-size: 20px;
+    cursor: pointer;
+    color: #666;
+  }
+  
+  .modal-locsis-fechar:hover {
+    color: #000;
+  }
+  
+  .modal-locsis-body {
+    padding: 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px 30px;
+    font-size: 14px;
+    color: #444;
+  }
+  
+  .modal-locsis-body p {
+    margin: 0;
+  }
+  
+  .modal-locsis-body strong {
+    display: block;
+    margin-bottom: 4px;
+    color: #2C34C9;
+    font-weight: bold;
+  }
+  
+  .modal-locsis-footer {
+    padding: 15px 20px;
+    text-align: right;
+    border-top: 1px solid #eee;
+    background: #f9f9f9;
+  }
+  
+  .modal-btn {
+    padding: 8px 16px;
+    background-color: #2C34C9;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+    cursor: pointer;
+    margin-top: 30px;
+  }
+  
+  .modal-btn:hover {
+    background-color: #181D77;
+  }
+
+  .alinha-direita {
+    display: flex !important;
+    justify-content: flex-end;
+    padding: 0 20px 20px 0; /* margem interna pra afastar da borda */
+  }
+
+ 

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Tickets</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container">
+        <h1>Cadastro de Tickets</h1>
+        <div class="botao_ler">
+            <button type="button" id="ler" class="ler">Ler</button>
+            <button type="button" id="ler_duvida" class="ler">Ler Dúvida</button>
+        
+        </div>
+        
+           
+        <div id="textoLer" class="texto-oculto">
+            
+            <p>O Tiket puxará número 1 acima do último id do banco de dados vezes 10000, porque aparece 10001, 100002, etc.</p>
+            <p>A Razão Social puxará os dados automaticamente do banco de dados do Locsis</p>
+            <p>O CNPJ puxa automático</p>
+            <p>No checkbox cliente, vai ser puxado o valor no banco de dados se é cliente ou não. Caso seja ele já marca automaticamente e bloqueia, caso não seja ele permite marcar o checkbox, onde ao salvar, o cliente vira ativo, alterando no banco de dados de false para true.</p>
+            <p>Quando adiciona o tipo Dúvida, Funcionalidade, Churn ou Sistema o formulário abre o campo correspondente</p>
+            <button type="button" id="fecharTexto">Fechar</button>
+        </div>
+        <div id="duvidaLer" class="texto-oculto">
+            <p>Esta é uma explicação detalhada sobre as dúvidas mais frequentes no sistema...</p>
+            <button type="button" id="fecharDuvida">Fechar</button>
+        </div>
+        <form id="formTicket">
+            <label for="ticket" >Ticket:</label>
+            <input type="text" id="ticket" disabled>
+
+            <label for="razao_social">Razão Social:</label>
+            <div class="sugestoes-container">
+                <input type="text" id="razao_social" required autocomplete="off">
+                <div id="sugestoes"></div>
+            </div>
+            <div class="cnpj">
+                <label for="cnpj">CNPJ:</label>
+                <input type="text" id="cnpj" disabled>
+            </div>
+            <div class="cliente-card">
+                <div class="check">
+                    <label for="cliente">Cliente:</label>
+                    <input type="checkbox" id="cliente">
+                </div>
+               
+            </div>
+            <div class="atendente">
+                <label for="atendente">Atendente:</label>
+                <select id="atendente" name="atendente" required>
+                    <option value="" disabled selected>Selecione um Atendente</option>
+                    <option value="diego">Diego</option>
+                    <option value="cassio">Cássio</option>
+                </select>
+            </div>
+            <div class="tipo">
+                <label for="tipo">Tipo:</label>
+                <select id="tipo" required>
+                    <option value="" disabled selected>Adicionar</option>
+                    <option value="duvida">Dúvida</option>
+                    <option value="funcionalidade">Funcionalidade</option>
+                    <option value="churn">Churn</option>
+                    <option value="sistema">Sistema</option>
+                </select>
+            </div>
+            <div class="duvida">
+                <div class="check">
+                    <label for="card">Abrir Card?</label>
+                    <input type="checkbox" id="card">
+                </div>
+                <div class="status">
+                    <label for="status">Status:</label>
+                    <select id="status" name="status" required>
+                        <option value="" disabled selected>Selecione um Status</option>
+                        <option value="pendente">Pendente</option>
+                        <option value="em-analise">Em Análise</option>
+                        <option value="resolvido">Resolvido</option>
+                    </select>
+                </div>
+                <label for="titulo">Título:</label>
+                <input type="text" id="titulo" autocomplete="off">
+
+                <label for="menu_duvida">Menu/Dúvida:</label>
+                <div class="sugestoes-container">
+                    <input type="text" id="menu_duvida" name="menu_duvida" autocomplete="off" required>
+                    <div id="sugestoesMenu"></div>
+                </div>
+                <label for="descricao">Descrição:</label>
+                <textarea id="descricao" name="descricao" autocomplete="off" ></textarea>
+            </div>
+            <div class="funcionalidade">
+                <p>funcionalidade</p>
+            </div>
+            <div class="churn">
+                <p>churn</p>
+            </div>
+            <div class="sistema">
+                <p>sistema</p>
+            </div>
+            <button type="submit" id="salvar" class="botao-desativado" disabled>Salvar</button>
+            <div class="novo_fechar">
+                <button type="button" id="fechar">Fechar Ticket</button>
+            </div>
+        </form>
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>

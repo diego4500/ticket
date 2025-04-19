@@ -1,0 +1,2 @@
+
+o usuário tem a verificação se o nome do arquivo tem locsis

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Cadastro</title>
+  <link rel="stylesheet" href="style/login.css">
+</head>
+<body>
+    <div class="flex">
+        <div class="login-container">
+            <form class="login-box" id="formLogin">
+                <div class="esquerdo"><h1>Cadastro</h1></div>
+                <p>Digite email e senha para cadastro. A aprovação será feita através de algum usuário já existente.</p>
+              
+                
+                <div class="input-wrapper">
+                  <img src="imagens/nome.png" class="input-icon">
+                  <input type="nome" id="nome" placeholder="Nome e Sobrenome" required>
+                </div>
+                <div class="input-wrapper">
+                  <img src="/imagens/login.png" class="input-icon">
+                  <input type="email" id="email" placeholder="Email" required>
+                </div>
+              
+                <div class="input-wrapper">
+                  <img src="/imagens/cadeado.png" class="input-icon">
+                  <input type="password" id="senha" placeholder="Cadastrar senha" required>
+                </div>
+                <div class="input-wrapper">
+                  <img src="/imagens/cadeado.png" class="input-icon">
+                  <input type="password" id="confirm_password" placeholder="Confirme a senha" required>
+                </div>
+              
+                <button type="submit">Cadastrar</button>
+                <div class="home">
+                  <a href="/login" >Ir para a página de login.</a>                
+                </div>
+              </form>              
+              
+          </div>
+    </div>
+ 
+
+  <script src="script/cadastrar.js"></script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+ssh root@177.153.51.184
+@Secpoint9
+
+cd /var/www/gestaoticket
+
+
+Ver os processos rodando:
+pm2 list
+
+Ver logs da aplicação:
+pm2 logs gestaoticket
+
+
+Salvar os processos pra reiniciar com a VPS:
+pm2 save
+
+Reiniciar manualmente:
+pm2 restart gestaoticket
+
+mysql
+
+sudo mysql -u root -p
+@Secpoint9
+
+
+CREATE USER 'ticket'@'localhost' IDENTIFIED BY 'minha_senha_segura';
+GRANT ALL PRIVILEGES ON tickets_db.* TO 'meusistema'@'localhost';
+FLUSH PRIVILEGES;

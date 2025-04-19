@@ -1,0 +1,15 @@
+Iniciar servidor
+
+cd C:\Users\Samsung\Documents\estudo\node.js\formulario2
+nodemon server.js
+
+Verificar dados no Banco de Dados
+mysql -u root -p
+senha
+
+USE tickets_db;
+SELECT * FROM tickets;
+
+SELECT * FROM tickets ORDER BY id DESC;
+
+sair: exit
