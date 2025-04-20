@@ -1,7 +1,7 @@
 //// Vetor com o nomes das empresas simulando um banco de dados
 
 
-
+alert("oi");
 
 const simulacaoBancoDeDados = [
     {
@@ -619,7 +619,7 @@ function criarBotaoCadastro(texto, container, aoClicar) {
     // Estilo direto
     botao.style.margin = "10px";
     botao.style.display = "block";
-    botao.style.marginLeft = "auto"; // força o alinhamento à direita
+    
 
     botao.addEventListener("click", () => {
         if (typeof aoClicar === "function") {
@@ -984,7 +984,36 @@ function sugestaoFuncionalidade() {
       } else {
         sugestoesDiv.innerHTML = "<div style='padding: 8px;'>Nenhuma sugestão encontrada</div>";
   
-        criarBotaoCadastro("Cadastrar Motivo", sugestoesDiv, async () => {
+        // Container para os dois botões lado a lado
+        const containerBotoes = document.createElement("div");
+        containerBotoes.classList.add("sugestoes-container-botoes");
+  
+        // Botão: Cadastrar Funcionalidade
+        criarBotaoCadastro("Cadastrar Funcionalidade", containerBotoes, async () => {
+          const novaFuncionalidade = input.value.trim();
+          if (novaFuncionalidade.length === 0) return;
+  
+          const resposta = await fetch("/cadastrar-funcionalidade", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              funcionalidade: novaFuncionalidade,
+              usuario: nomeUsuarioLogado
+            })
+          });
+  
+          const resultado = await resposta.json();
+  
+          if (resposta.ok && resultado.sucesso) {
+            alert("✅ Funcionalidade cadastrada com sucesso!");
+            sugestoesDiv.style.display = "none";
+          } else {
+            alert("❌ Erro ao cadastrar funcionalidade.");
+          }
+        });
+  
+        // Botão: Cadastrar Motivo
+        criarBotaoCadastro("Cadastrar Motivo", containerBotoes, async () => {
           const novo = input.value.trim();
           if (novo.length === 0) return;
   
@@ -1004,6 +1033,8 @@ function sugestaoFuncionalidade() {
           }
         });
   
+        // Adiciona os dois botões ao container de sugestões
+        sugestoesDiv.appendChild(containerBotoes);
         sugestoesDiv.style.display = "block";
       }
     }
@@ -1037,6 +1068,8 @@ function sugestaoFuncionalidade() {
       }, 200);
     });
   }
+  
+  
   
   
 

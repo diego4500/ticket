@@ -17,6 +17,10 @@ a{
     text-decoration: none;
 }
 
+
+  
+  
+
 .mensagem-nav {
     font-size: 14px;
     color: white;
@@ -564,7 +568,7 @@ a {
 .sugestoes-container-botoes {
     display: flex;
     justify-content: flex-end;
-    gap: 10px;
+   
     flex-wrap: wrap;
     /* permite quebrar linha se não couber */
 }

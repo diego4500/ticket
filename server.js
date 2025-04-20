@@ -994,35 +994,54 @@ app.post('/verificar-excel', upload.single('arquivo'), (req, res) => {
 // rota para cadastro de usuário
 
 app.post('/cadastro', async (req, res) => {
-  const { email, senha, nome } = req.body;
+  try {
+    const { email, senha, nome } = req.body;
 
-  console.log("Dados recebidos no backend:", { email, nome });
+    console.log("📥 Dados recebidos:", { email, senha, nome });
 
-  // Verifica se o email já está cadastrado
-  const sqlVerifica = 'SELECT id FROM usuarios WHERE email = ?';
-  db.query(sqlVerifica, [email], async (err, results) => {
-    if (err) {
-      console.error("Erro ao verificar email:", err);
-      return res.status(500).json({ sucesso: false, mensagem: 'Erro interno.' });
+    if (!email || !senha || !nome) {
+      console.log("⚠️ Dados faltando no corpo");
+      return res.status(400).json({ sucesso: false, mensagem: 'Campos obrigatórios faltando.' });
     }
 
-    if (results.length > 0) {
-      return res.status(400).json({ sucesso: false, mensagem: 'Este email já está cadastrado.' });
-    }
-
-    // Se não existir, continua com o cadastro
-    const hash = await bcrypt.hash(senha, 10);
-    const sqlInserir = 'INSERT INTO usuarios (nome, email, senha) VALUES (?, ?, ?)';
-
-    db.query(sqlInserir, [nome, email, hash], (err) => {
+    const sqlVerifica = 'SELECT id FROM usuarios WHERE email = ?';
+    db.query(sqlVerifica, [email], async (err, results) => {
       if (err) {
-        console.error("Erro ao inserir:", err);
-        return res.status(500).json({ sucesso: false, mensagem: 'Erro ao cadastrar.' });
+        console.error("❌ Erro ao verificar email:", err);
+        return res.status(500).json({ sucesso: false, mensagem: 'Erro interno na verificação.' });
       }
-      res.json({ sucesso: true });
+
+      if (results.length > 0) {
+        console.log("⚠️ Email já existe");
+        return res.status(400).json({ sucesso: false, mensagem: 'Este email já está cadastrado.' });
+      }
+
+      try {
+        const hash = await bcrypt.hash(senha, 10);
+        console.log("🔐 Hash gerado:", hash);
+
+        const sqlInserir = 'INSERT INTO usuarios (nome, email, senha) VALUES (?, ?, ?)';
+        db.query(sqlInserir, [nome, email, hash], (err) => {
+          if (err) {
+            console.error("❌ Erro ao inserir:", err);
+            return res.status(500).json({ sucesso: false, mensagem: 'Erro ao cadastrar no banco.' });
+          }
+
+          console.log("✅ Cadastro realizado com sucesso!");
+          res.json({ sucesso: true });
+        });
+
+      } catch (erroHash) {
+        console.error("❌ Erro ao gerar hash:", erroHash);
+        res.status(500).json({ sucesso: false, mensagem: 'Erro ao gerar senha segura.' });
+      }
     });
-  });
+  } catch (erro) {
+    console.error("❌ Erro geral na rota /cadastro:", erro);
+    res.status(500).json({ sucesso: false, mensagem: 'Erro inesperado.' });
+  }
 });
+
 
 
 
