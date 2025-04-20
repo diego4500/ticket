@@ -1,4 +1,6 @@
 require('dotenv').config({ path: 'dados.env' });
+require('dotenv').config({ path: 'dados.env' });
+console.log("🟢 DB_USER carregado:", process.env.DB_USER);
 
 const express = require('express');
 const mysql = require('mysql2');
