@@ -1,7 +1,6 @@
 //// Vetor com o nomes das empresas simulando um banco de dados
 
 
-alert("oi");
 
 const simulacaoBancoDeDados = [
     {
