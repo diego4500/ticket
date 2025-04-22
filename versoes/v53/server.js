@@ -112,23 +112,6 @@ app.post('/salvar-ticket', (req, res) => {
       console.error('Erro ao inserir ticket:', err);
       return res.status(500).json({ error: 'Erro ao salvar o ticket' });
     }
-  
-    // Atualiza cliente para 0 se for churn
-    if (tipo === "churn" && cliente === true) {
-      const atualizarClienteSQL = `
-        UPDATE razao_social
-        SET cliente = 0
-        WHERE razao_social = ?
-      `;
-      db.query(atualizarClienteSQL, [razao_social], (err2) => {
-        if (err2) {
-          console.error("Erro ao atualizar cliente após churn:", err2);
-        } else {
-          console.log(`🟡 Cliente ${razao_social} atualizado para não cliente após churn.`);
-        }
-      });
-    }
-  
     res.status(201).json({ message: 'Ticket salvo com sucesso!', id: result.insertId });
   });
 });
@@ -194,11 +177,6 @@ app.get('/churn', autenticado, (req, res) => {
 app.get('/', (req, res) => {
   res.redirect('/login');
 });
-
-app.get('/teste', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'teste.html'));
-});
-
 
 
 
@@ -609,31 +587,11 @@ app.get('/exportar-excel-duvidas', async (req, res) => {
 
 // Churn excel
 
-
-
 app.get('/exportar-excel-churn', async (req, res) => {
   try {
-    const query = `
-      SELECT 
-        t.razao_social,
-        rs.nome_fantasia,
-        rs.cnpj,
-        t.atendente,
-        t.tipo,
-        t.status,
-        t.descricao,
-        t.chamado,
-        rs.data_cliente,
-        t.data_abertura AS data_do_churn,
-        t.hora
-      FROM tickets t
-      LEFT JOIN razao_social rs 
-        ON BINARY TRIM(t.razao_social) = BINARY TRIM(rs.razao_social)
-      WHERE t.tipo = 'churn'
-      ORDER BY t.id DESC
-    `;
+    const query = `SELECT * FROM tickets WHERE tipo = 'churn' ORDER BY id DESC`;
 
-    db.query(query, async (err, results) => {
+    db.query(query, async (err, results, fields) => {
       if (err) {
         console.error("Erro ao buscar dados:", err);
         return res.status(500).send("Erro ao gerar relatório de churn.");
@@ -642,58 +600,64 @@ app.get('/exportar-excel-churn', async (req, res) => {
       const workbook = new ExcelJS.Workbook();
       const sheet = workbook.addWorksheet("Churn");
 
-      // Define manualmente a ordem e os cabeçalhos
-      const camposOrdenados = [
-        { key: "razao_social", header: "Razão Social" },
-        { key: "nome_fantasia", header: "Nome Fantasia" },
-        { key: "cnpj", header: "CNPJ" },
-        { key: "atendente", header: "Atendente" },
-        { key: "tipo", header: "Tipo" },
-        { key: "status", header: "Status" },
-        { key: "descricao", header: "Descrição" },
-        { key: "chamado", header: "Chamado" },
-        { key: "data_cliente", header: "Data do Cliente" },
-        { key: "data_do_churn", header: "Data do Churn" },
-        { key: "hora", header: "Hora" },
+      const colunasParaExcluir = [
+        'id', 'titulo', 'menu_duvida', 'funcionalidade', 'sistema',
+        'data_fechamento', 'hora_fechamento'
       ];
+      const ordemFinal = ['data_abertura', 'hora'];
 
-      // Define colunas na planilha
-      sheet.columns = camposOrdenados.map(col => ({
-        header: col.header,
-        key: col.key,
-        width: col.key.includes("data") ? 15 : col.key.includes("hora") ? 10 : 20
-      }));
+      const camposFiltrados = fields
+        .filter(field => !colunasParaExcluir.includes(field.name))
+        .sort((a, b) => {
+          const aFinal = ordemFinal.includes(a.name);
+          const bFinal = ordemFinal.includes(b.name);
+          if (aFinal && !bFinal) return 1;
+          if (!aFinal && bFinal) return -1;
+          return 0;
+        })
+        .map(field => ({
+          header: field.name.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase()),
+          key: field.name,
+          width: field.name.includes("data") ? 12 : field.name.includes("hora") ? 10 : 20
+        }));
 
-      // Monta os dados na mesma ordem
-      const dados = results.map(row => {
+      sheet.columns = camposFiltrados;
+
+      const dadosFiltrados = results.map(row => {
         const novo = {};
-        camposOrdenados.forEach(col => {
-          novo[col.key] = row[col.key];
+        camposFiltrados.forEach(coluna => {
+          novo[coluna.key] = row[coluna.key];
         });
         return novo;
       });
 
-      sheet.addRows(dados);
+      sheet.addRows(dadosFiltrados);
 
-      // Ajuste de largura automática
       sheet.columns.forEach(column => {
         let maxLength = column.header.length;
         column.eachCell({ includeEmpty: true }, cell => {
           const cellLength = cell.value ? cell.value.toString().length : 0;
           if (cellLength > maxLength) maxLength = cellLength;
         });
-        column.width = Math.min(maxLength + 2, 30);
+
+        if (column.key.includes("data")) {
+          column.width = 12;
+        } else if (column.key.includes("hora")) {
+          column.width = 10;
+        } else {
+          column.width = Math.min(maxLength, 30);
+        }
       });
 
-      // Congela a primeira linha e ativa filtro
       sheet.views = [{ state: 'frozen', xSplit: 1, ySplit: 1 }];
       sheet.autoFilter = {
         from: 'A1',
-        to: `K1` // 11ª coluna = K
+        to: `${String.fromCharCode(64 + camposFiltrados.length)}1`
       };
 
       res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
       res.setHeader('Content-Disposition', 'attachment; filename=relatorio_churn.xlsx');
+
       await workbook.xlsx.write(res);
       res.end();
     });
@@ -702,80 +666,6 @@ app.get('/exportar-excel-churn', async (req, res) => {
     res.status(500).send("Erro ao exportar Excel de churn.");
   }
 });
-
-app.get('/exportar-excel-cliente-churn', async (req, res) => {
-  try {
-    const query = `
-      SELECT 
-        razao_social, 
-        nome_fantasia, 
-        cnpj, 
-        data_cliente, 
-        data_churn 
-      FROM churn 
-      ORDER BY data_churn DESC
-    `;
-
-    db.query(query, async (err, results) => {
-      if (err) {
-        console.error("Erro ao buscar churns de clientes:", err);
-        return res.status(500).send("Erro ao gerar relatório de churn cliente.");
-      }
-
-      const workbook = new ExcelJS.Workbook();
-      const sheet = workbook.addWorksheet("Churn Cliente");
-
-      const campos = [
-        { key: "razao_social", header: "Razão Social" },
-        { key: "nome_fantasia", header: "Nome Fantasia" },
-        { key: "cnpj", header: "CNPJ" },
-        { key: "data_cliente", header: "Data Cliente" },
-        { key: "data_churn", header: "Data Churn" }
-      ];
-
-      sheet.columns = campos.map(col => ({
-        header: col.header,
-        key: col.key,
-        width: col.key.includes("data") ? 15 : 20
-      }));
-
-      const dados = results.map(row => {
-        const novo = {};
-        campos.forEach(col => {
-          novo[col.key] = row[col.key];
-        });
-        return novo;
-      });
-
-      sheet.addRows(dados);
-
-      sheet.columns.forEach(column => {
-        let maxLength = column.header.length;
-        column.eachCell({ includeEmpty: true }, cell => {
-          const cellLength = cell.value ? cell.value.toString().length : 0;
-          if (cellLength > maxLength) maxLength = cellLength;
-        });
-        column.width = Math.min(maxLength + 2, 30);
-      });
-
-      sheet.views = [{ state: 'frozen', xSplit: 1, ySplit: 1 }];
-      sheet.autoFilter = {
-        from: 'A1',
-        to: 'E1'
-      };
-
-      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-      res.setHeader('Content-Disposition', 'attachment; filename=relatorio_cliente_churn.xlsx');
-      await workbook.xlsx.write(res);
-      res.end();
-    });
-  } catch (error) {
-    console.error("Erro:", error);
-    res.status(500).send("Erro ao exportar Excel de churn cliente.");
-  }
-});
-
-
 
 
 
@@ -1282,9 +1172,7 @@ app.get("/sugestoes-funcionalidade", (req, res) => {
   db.query(sql, [`%${termo}%`], (err, resultados) => {
     if (err) {
       console.error("Erro ao buscar funcionalidades:", err);
-      console.error("Erro ao cadastrar:", err);
-return res.status(500).send("Erro interno: " + err.message);
-
+      return res.status(500).json([]); // ainda retorna JSON vazio em caso de erro
     }
 
     const funcionalidades = resultados.map(row => row.funcionalidade);
@@ -1395,16 +1283,12 @@ app.post("/cadastrar-churn", (req, res) => {
 // Salvar churn na tabela churn
 
 app.post("/salvar-churn", async (req, res) => {
-  const { razao_social, nome_fantasia, cnpj } = req.body;
-  const data_churn = new Date().toLocaleDateString("pt-BR").split("/").reverse().join("-");
+  const { razao_social, nome_fantasia, cnpj, data_cliente } = req.body;
+  const data_churn = new Date().toISOString().split("T")[0]; // Data de hoje
 
   const verificarSQL = `
     SELECT * FROM churn 
     WHERE razao_social = ? AND data_churn = ?
-  `;
-
-  const buscarDataClienteSQL = `
-    SELECT data_cliente FROM razao_social WHERE razao_social = ?
   `;
 
   const inserirSQL = `
@@ -1413,21 +1297,13 @@ app.post("/salvar-churn", async (req, res) => {
   `;
 
   try {
-    // Verifica se já existe churn hoje para essa razão social
     const [existentes] = await db.promise().query(verificarSQL, [razao_social, data_churn]);
+
     if (existentes.length > 0) {
+      // Se já existir, apenas finaliza a requisição sem erro nem mensagem
       return res.json({ sucesso: true });
     }
 
-    // Busca a data_cliente na tabela razao_social
-    const [resultadoData] = await db.promise().query(buscarDataClienteSQL, [razao_social]);
-    const data_cliente = resultadoData.length > 0 ? resultadoData[0].data_cliente : null;
-
-    if (!data_cliente) {
-      return res.status(400).json({ sucesso: false, mensagem: "Data do cliente não encontrada." });
-    }
-
-    // Faz o insert com a data_cliente buscada
     await db.promise().query(inserirSQL, [razao_social, nome_fantasia, cnpj, data_cliente, data_churn]);
 
     res.json({ sucesso: true });
@@ -1436,7 +1312,6 @@ app.post("/salvar-churn", async (req, res) => {
     res.status(500).json({ sucesso: false, mensagem: "Erro interno ao salvar churn." });
   }
 });
-
 
 // buscar os churns
 
@@ -1494,7 +1369,10 @@ app.get("/churns-por-razao", (req, res) => {
   });
 });
 
-const fetch = require("node-fetch");
+
+
+
+
 
 
 
@@ -1502,7 +1380,7 @@ const fetch = require("node-fetch");
 
 // Iniciar servidor
 app.listen(port, () => {
-  console.log(`Servidor rodando`);
+  console.log(`Servidor rodando em https://ticket.vps-kinghost.net`);
 });
 
 

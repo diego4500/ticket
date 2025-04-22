@@ -1282,9 +1282,7 @@ app.get("/sugestoes-funcionalidade", (req, res) => {
   db.query(sql, [`%${termo}%`], (err, resultados) => {
     if (err) {
       console.error("Erro ao buscar funcionalidades:", err);
-      console.error("Erro ao cadastrar:", err);
-return res.status(500).send("Erro interno: " + err.message);
-
+      return res.status(500).json([]); // ainda retorna JSON vazio em caso de erro
     }
 
     const funcionalidades = resultados.map(row => row.funcionalidade);

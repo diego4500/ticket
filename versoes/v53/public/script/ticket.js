@@ -148,8 +148,6 @@ formulario.addEventListener("submit", async (e) => {
 
     const tipoTicket = document.getElementById("tipo").value;
 
-
-
     // Campos dinâmicos (precisa checar se existem no DOM)
     const cardTicket = document.querySelector("#card")?.checked || false;
     const tituloTicket = document.querySelector("#titulo")?.value || "";
