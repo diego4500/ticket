@@ -1,4 +1,4 @@
-// ferramentas
+
 document.getElementById('formUpload').addEventListener('submit', function (event) {
   event.preventDefault(); // Impede o envio automático do formulário
 
@@ -74,7 +74,16 @@ let itemSelecionadoRazao = false;
 
 tenantInput.addEventListener('input', () => {
   razaoSocialSugestoes(tenantInput.value);
+  
 });
+
+document.getElementById('dataCliente').addEventListener('focus', () => {
+  const campo = document.getElementById('dataCliente');
+  if (!campo.value) {
+    trazerDataAtual();
+  }
+});
+
 
 // Esconde sugestões se não clicar em nenhuma
 tenantInput.addEventListener('blur', () => {
@@ -138,11 +147,13 @@ document.getElementById('formAlterar').addEventListener('submit', function (e) {
   const razao_social = document.getElementById('tenant').value;
   const nome_fantasia = document.getElementById('nome_fantasia').value;
   const cliente = document.getElementById('cliente').checked ? 1 : 0;
+  const data_cliente = document.getElementById('dataCliente').value;
 
   fetch('/alterar-cliente', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ razao_social, nome_fantasia, cliente })
+    body: JSON.stringify({ razao_social, nome_fantasia, cliente, data_cliente })
+
   })
     .then(res => res.json())
     .then(resposta => {
@@ -161,5 +172,15 @@ document.getElementById('formAlterar').addEventListener('submit', function (e) {
       alert("❌ Ocorreu um erro ao tentar atualizar o cliente.");
     });
 });
+
+function trazerDataAtual(){
+  const hoje = new Date();
+const yyyy = hoje.getFullYear();
+const mm = String(hoje.getMonth() + 1).padStart(2, '0'); // meses de 0 a 11
+const dd = String(hoje.getDate()).padStart(2, '0');
+
+document.getElementById("dataCliente").value = `${yyyy}-${mm}-${dd}`;
+
+}
 
 
