@@ -1,5 +1,5 @@
 require('dotenv').config({ path: 'dados.env' });
-require('dotenv').config({ path: 'dados.env' });
+
 console.log("🟢 DB_USER carregado:", process.env.DB_USER);
 
 const express = require('express');
@@ -44,7 +44,15 @@ const db = mysql.createPool({
   queueLimit: 0
 });
 
-const dbPromise = db.promise(); // ← esta linha aqui
+const dbPromise = db.promise(); 
+
+// Ping para manter o pool de conexões ativo
+setInterval(() => {
+  db.query('SELECT 1', (err) => {
+    if (err) console.error("🔴 Erro no ping de conexão:", err.message);
+    else console.log("🔁 Ping MySQL OK");
+  });
+}, 60000); // a cada 60 segundos
 
 db.getConnection((err, connection) => {
   if (err) {
@@ -204,6 +212,10 @@ app.get('/', (req, res) => {
 
 app.get('/teste', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'teste.html'));
+});
+
+app.get('/apresentacao', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'apresentacao.html'));
 });
 
 

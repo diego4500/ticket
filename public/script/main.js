@@ -78,4 +78,9 @@ else if (rotaAtual.includes("churn")) {
     console.log("📥 Script dos churns carregados.");
   });
 }
+else if (rotaAtual.includes("apresentacao")) {
+  import('./apresentacao.js').then(() => {
+    console.log("📥 Script dos apresentacao carregados.");
+  });
+}
 

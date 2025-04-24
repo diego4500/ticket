@@ -149,8 +149,8 @@ body {
 }
 
 .container {
-    max-width: 1024px;
-    width: 100%;
+    width: 1024px;
+    
     background: white;
     padding: 10px 50px;
     border-radius: 10px;

@@ -2,121 +2,78 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Consulta de Criação no RD CRM</title>
+  <title>Transcrição por Voz</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 30px; }
-    .linha {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-    }
-    #sugestoes {
-      position: absolute;
-      background: #fff;
-      border: 1px solid #ccc;
-      max-height: 200px;
-      overflow-y: auto;
-      display: none;
-      z-index: 1000;
-      width: 400px;
-    }
-    #sugestoes div {
-      padding: 8px;
-      cursor: pointer;
-    }
-    #sugestoes div:hover {
-      background-color: #f0f0f0;
-    }
-    input[type="date"] {
+    #campoTexto {
+      width: 300px;
+      height: 300px;
       padding: 10px;
       font-size: 16px;
     }
   </style>
 </head>
 <body>
-  <h2>Buscar Razão Social e Data de Criação</h2>
-
-  <div class="linha">
-    <input type="text" id="razao_social" placeholder="Digite a razão social" autocomplete="off">
-    <input type="date" id="data_criacao" placeholder="Data de Criação">
-  </div>
-
-  <div id="sugestoes"></div>
-  <p id="resultado"></p>
+  <textarea id="campoTexto" placeholder="Fale algo..."></textarea><br>
+  <button id="btnFalar">🎤 Falar</button>
 
   <script>
-    const razaoInput = document.getElementById("razao_social");
-    const sugestoesDiv = document.getElementById("sugestoes");
-    const dataInput = document.getElementById("data_criacao");
-    let itemSelecionadoRazao = false;
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-    razaoInput.addEventListener("input", () => {
-      razaoSocialSugestoes(razaoInput.value);
-    });
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'pt-BR';
+      recognition.interimResults = false;
 
-    razaoInput.addEventListener("blur", () => {
-      setTimeout(() => {
-        if (!itemSelecionadoRazao) {
-          sugestoesDiv.style.display = 'none';
+      const input = document.getElementById('campoTexto');
+      const botao = document.getElementById('btnFalar');
+
+      botao.addEventListener('click', () => {
+        recognition.start();
+      });
+
+      recognition.onresult = (event) => {
+        let novoTexto = event.results[0][0].transcript;
+
+        // Substituir palavras por pontuação
+        novoTexto = novoTexto.replace(/\bvírgula\b/gi, ',');
+        novoTexto = novoTexto.replace(/\bponto final\b/gi, '.');
+        novoTexto = novoTexto.replace(/\bponto\b/gi, '.');
+        novoTexto = novoTexto.replace(/\binterrogação\b/gi, '?');
+        novoTexto = novoTexto.replace(/\bexclamação\b/gi, '!');
+
+        // Remove espaços antes da pontuação
+        novoTexto = novoTexto.replace(/\s*([,.!?])/g, '$1');
+
+        // Adiciona espaço depois de pontuação final (não após vírgula)
+        novoTexto = novoTexto.replace(/([.!?])(?=\S)/g, '$1 ');
+
+        // Deixa tudo minúsculo por padrão
+        novoTexto = novoTexto.toLowerCase().trim();
+
+        // ✅ Adiciona ponto final se não terminar com ., ! ou ?
+        const ultimaLetra = novoTexto.trim().slice(-1);
+        if (!['.', '!', '?'].includes(ultimaLetra)) {
+          novoTexto += '.';
         }
-      }, 200);
-    });
 
-    function formatarDataISOParaInput(dataISO) {
-      const data = new Date(dataISO);
-      return data.toISOString().split("T")[0];
-    }
+        // Pega texto anterior
+        let textoAtual = input.value.trim();
 
-    function razaoSocialSugestoes(razao) {
-      sugestoesDiv.innerHTML = '';
-      sugestoesDiv.style.display = 'none';
-      itemSelecionadoRazao = false;
+        // Concatena
+        let textoFinal = textoAtual ? textoAtual + ' ' + novoTexto : novoTexto;
 
-      if (!razao.trim()) return;
+        // Coloca maiúscula no início e após ponto
+        textoFinal = textoFinal.replace(/(^\s*\w)|(\.\s*\w)/g, match => match.toUpperCase());
 
-      fetch(`/sugestoes-razao-social?q=${encodeURIComponent(razao)}`)
-        .then(res => res.json())
-        .then(lista => {
-          if (!lista || lista.length === 0) return;
+        // Atualiza textarea
+        input.value = textoFinal;
+      };
 
-          lista.forEach(empresa => {
-            const div = document.createElement('div');
-            div.textContent = `${empresa.razao_social} (${empresa.cnpj})`;
-
-            div.addEventListener('mousedown', async () => {
-              itemSelecionadoRazao = true;
-              razaoInput.value = empresa.razao_social;
-              sugestoesDiv.innerHTML = '';
-              sugestoesDiv.style.display = 'none';
-              dataInput.value = '';
-
-              const cnpjLimpo = empresa.cnpj.replace(/[^\d]+/g, '');
-
-              try {
-                const resposta = await fetch(`/consultar-data-crm?cnpj=${cnpjLimpo}`);
-                const dados = await resposta.json();
-
-                if (dados && dados.length > 0 && dados[0].created_at) {
-                  const dataFormatada = formatarDataISOParaInput(dados[0].created_at);
-                  dataInput.value = dataFormatada;
-                  document.getElementById("resultado").textContent = `📅 Empresa localizada no RD Station`;
-                } else {
-                  document.getElementById("resultado").textContent = "❌ Empresa não encontrada no RD Station";
-                }
-              } catch (erro) {
-                console.error("Erro ao consultar RD CRM:", erro);
-                document.getElementById("resultado").textContent = "Erro ao consultar o RD Station.";
-              }
-            });
-
-            sugestoesDiv.appendChild(div);
-          });
-
-          sugestoesDiv.style.display = 'block';
-        })
-        .catch(erro => {
-          console.error("Erro ao buscar sugestões:", erro);
-        });
+      recognition.onerror = (event) => {
+        alert('Erro ao reconhecer: ' + event.error);
+      };
+    } else {
+      alert('Seu navegador não suporta reconhecimento de voz.');
     }
   </script>
 </body>
