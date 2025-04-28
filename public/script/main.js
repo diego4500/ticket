@@ -83,4 +83,11 @@ else if (rotaAtual.includes("apresentacao")) {
     console.log("📥 Script dos apresentacao carregados.");
   });
 }
+else if (rotaAtual.includes("razao_social")) {
+  import('./razao_social.js').then(() => {
+    console.log("📥 Script dos apresentacao carregados.");
+  });
+}
+
+
 

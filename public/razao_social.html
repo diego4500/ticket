@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Apresentação</title>
+  <link rel="stylesheet" href="style/style.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+</head>
+
+<body>
+  <div id="nav-placeholder"></div>
+
+
+  <div class="main-content">
+    <div class="centro">
+      <div>
+
+        <div class="container">
+          <div class="div-extremidades">
+            <div style="display: flex;">
+              <div style="display: flex; flex-direction: column; align-items: center;">
+                <label for="filtroCliente" style="margin-bottom: 2px;">Contador Clientes:</label>
+                <div class="display-container">
+                  <div id="contador" class="display">00</div>
+                </div>
+              </div>
+              <h1 class="tituloHB">Cadastro Razão Social</h1> 
+              <div class="buscar">
+                <input 
+                  type="text" 
+                  placeholder="🔍︎ Buscar..." 
+                  style="width: 100%; height: 30px ; padding: 8px 8px 8px 8px; border-radius: 6px; border: 1px solid #ccc;"
+                >
+                <span class="lupa" id="lupa">🔍︎</span>
+              </div>
+              
+            </div>
+        
+            <div style="display: flex;">
+              <div>
+                <label for="filtroCliente">Mostrar:</label>
+                <select id="filtroCliente">
+                  <option value="todos">Todos</option>
+                  <option value="cliente">Cliente</option>
+                </select>
+              </div>
+              <button id="cadastrar_razao">Cadastrar</button>
+            </div>
+          </div>
+
+          <div id="clientes_relatorio">
+            <div id="mensagem-relatorio" style="font-size: 16px; color: #777; margin-top: 20px;"></div>
+          </div>
+          <div id="container-carregar" class="alinha-direita" style="display: none !important;">
+            <button id="botaoCarregarMais">Carregar mais</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ✅ Modal de Exibição -->
+  <div id="modal" class="modal">
+    <div id="conteudoModal" class="conteudoModalB">
+      <!-- Conteúdo do modal será injetado aqui via JS -->
+    </div>
+  </div>
+
+  <footer id="footer-placeholder" class="rodape"></footer>
+  <script type="module" src="script/main.js"></script>
+  <script type="module" src="script/listar_razao.js"></script>
+</body>
+
+</html>

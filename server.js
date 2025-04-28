@@ -214,8 +214,16 @@ app.get('/teste', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'teste.html'));
 });
 
-app.get('/apresentacao', (req, res) => {
+app.get('/apresentacao', autenticado, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'apresentacao.html'));
+});
+
+app.get('/razao_social', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'razao_social.html'));
+});
+
+app.get('/importar', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'importar_razao.html'));
 });
 
 
@@ -301,7 +309,8 @@ app.get('/tickets-filtrado', (req, res) => {
       IFNULL(t.hora_fechamento, '-') AS hora_fechamento,
       t.chamado,
       t.descricao,
-      CASE TRIM(t.cliente) WHEN '1' THEN 'Sim' ELSE 'Não' END AS cliente
+      CASE TRIM(t.cliente) WHEN '1' THEN '✅' ELSE '❌' END AS cliente
+
     FROM tickets t
   `;
 
@@ -363,7 +372,7 @@ app.get('/tickets/abertos', (req, res) => {
 
 // Rota que exibe somente os abertos do banco de dados
 
-app.get('/tickets/fechados', (req, res) => {
+app.get('/tickets/fechados',  (req, res) => {
   const sql = `
     SELECT 
         ticket, 
@@ -394,7 +403,7 @@ const ExcelJS = require('exceljs');
 
 // Exporta excel todos
 
-app.get('/exportar-excel', async (req, res) => {
+app.get('/exportar-excel', autenticado, async (req, res) => {
   try {
     const query = `SELECT * FROM tickets ORDER BY id DESC`;
 
@@ -464,7 +473,7 @@ app.get('/exportar-excel', async (req, res) => {
 
 // excel funcionalidade
 
-app.get('/exportar-excel-funcionalidade', async (req, res) => {
+app.get('/exportar-excel-funcionalidade', autenticado,async (req, res) => {
   try {
     const query = `SELECT * FROM tickets WHERE tipo = 'funcionalidade' ORDER BY id DESC`;
 
@@ -544,7 +553,7 @@ app.get('/exportar-excel-funcionalidade', async (req, res) => {
 
 
 // excel duvida
-app.get('/exportar-excel-duvidas', async (req, res) => {
+app.get('/exportar-excel-duvidas', autenticado, async (req, res) => {
   try {
     const query = `SELECT * FROM tickets WHERE tipo = 'duvida' ORDER BY id DESC`;
 
@@ -630,7 +639,7 @@ app.get('/exportar-excel-duvidas', async (req, res) => {
 
 
 
-app.get('/exportar-excel-churn', async (req, res) => {
+app.get('/exportar-excel-churn', autenticado, async (req, res) => {
   try {
     const query = `
       SELECT 
@@ -722,7 +731,7 @@ app.get('/exportar-excel-churn', async (req, res) => {
   }
 });
 
-app.get('/exportar-excel-cliente-churn', async (req, res) => {
+app.get('/exportar-excel-cliente-churn', autenticado, async (req, res) => {
   try {
     const query = `
       SELECT 
@@ -801,7 +810,7 @@ app.get('/exportar-excel-cliente-churn', async (req, res) => {
 
 // Sistemas Excel
 
-app.get('/exportar-excel-sistema', async (req, res) => {
+app.get('/exportar-excel-sistema', autenticado, async (req, res) => {
   try {
     const query = `SELECT * FROM tickets WHERE tipo = 'sistema' ORDER BY id DESC`;
 
@@ -893,7 +902,7 @@ app.post('/importar-razao-social', upload.single('arquivo'), (req, res) => {
     const dados = xlsx.utils.sheet_to_json(planilha, { header: 1 });
 
     const linhas = dados
-      .slice(1) // ignora a primeira linha (índice 0)
+      .slice(1) // ignora cabeçalho
       .map(l => String(l[0]).split(',')[0].trim())
       .filter(valor => typeof valor === 'string' && valor.trim() !== '');
 
@@ -902,20 +911,25 @@ app.post('/importar-razao-social', upload.single('arquivo'), (req, res) => {
 
     const promises = linhas.map(razaoCompleta => {
       return new Promise(resolve => {
-        const cnpjEncontrado = razaoCompleta.match(regexCNPJ)?.[0] || '';
+        const cnpjEncontrado = (razaoCompleta.match(regexCNPJ)?.[0] || '').replace(/\D/g, '');
         const razaoLimpa = razaoCompleta.trim();
 
-        db.query('SELECT * FROM razao_social WHERE razao_social = ?', [razaoLimpa], (err, result) => {
+        if (!cnpjEncontrado) {
+          console.warn(`CNPJ não encontrado para: ${razaoLimpa}`);
+          return resolve(); // pula sem salvar se não encontrou CNPJ
+        }
+
+        // 🔵 Aqui mudou: agora busca pelo CNPJ, não pela razão social
+        db.query('SELECT * FROM razao_social WHERE cnpj = ?', [cnpjEncontrado], (err, result) => {
           if (err) {
             console.error("Erro ao consultar:", err);
-            return resolve(); // continua mesmo com erro
+            return resolve();
           }
 
           if (result.length === 0) {
             db.query(
               'INSERT INTO razao_social (razao_social, nome_fantasia, cnpj, cliente) VALUES (?, ?, ?, ?)',
               [razaoLimpa, "", cnpjEncontrado, 0],
-
               (errInsert) => {
                 if (!errInsert) {
                   inseridos.push(razaoLimpa);
@@ -926,14 +940,14 @@ app.post('/importar-razao-social', upload.single('arquivo'), (req, res) => {
               }
             );
           } else {
-            resolve(); // já existe
+            resolve(); // já existe, não insere
           }
         });
       });
     });
 
     Promise.all(promises).then(() => {
-      fs.unlinkSync(caminhoArquivo); // limpa arquivo enviado
+      fs.unlinkSync(caminhoArquivo); // limpa arquivo temporário
       res.json({
         sucesso: true,
         total: inseridos.length,
@@ -946,6 +960,85 @@ app.post('/importar-razao-social', upload.single('arquivo'), (req, res) => {
     res.status(500).json({ sucesso: false, erro: 'Erro ao importar razão social' });
   }
 });
+
+
+// excel apresentacao
+app.get('/exportar-excel-apresentacao', autenticado, async (req, res) => {
+  try {
+    const query = `
+      SELECT 
+        razao_social, 
+        nome_fantasia, 
+        cnpj, 
+        DATE_FORMAT(data_cadastro, '%d/%m/%Y') AS data_cadastro, 
+        DATE_FORMAT(data_apresentacao, '%d/%m/%Y') AS data_apresentacao, 
+        observacao
+      FROM apresentacao
+      ORDER BY data_apresentacao DESC
+    `;
+
+    db.query(query, async (err, results) => {
+      if (err) {
+        console.error("Erro ao buscar apresentações:", err);
+        return res.status(500).send("Erro ao gerar relatório de apresentações.");
+      }
+
+      const workbook = new ExcelJS.Workbook();
+      const sheet = workbook.addWorksheet("Apresentações");
+
+      const campos = [
+        { key: "razao_social", header: "Razão Social" },
+        { key: "nome_fantasia", header: "Nome Fantasia" },
+        { key: "cnpj", header: "CNPJ" },
+        { key: "data_cadastro", header: "Data Cadastro RD" }, // ✅ aqui o novo nome
+        { key: "data_apresentacao", header: "Data Apresentação" },
+        { key: "observacao", header: "Observação" }
+      ];
+
+      sheet.columns = campos.map(col => ({
+        header: col.header,
+        key: col.key,
+        width: col.key.includes("data") ? 15 : 30
+      }));
+
+      const dados = results.map(row => {
+        const novo = {};
+        campos.forEach(col => {
+          novo[col.key] = row[col.key];
+        });
+        return novo;
+      });
+
+      sheet.addRows(dados);
+
+      sheet.columns.forEach(column => {
+        let maxLength = column.header.length;
+        column.eachCell({ includeEmpty: true }, cell => {
+          const cellLength = cell.value ? cell.value.toString().length : 0;
+          if (cellLength > maxLength) maxLength = cellLength;
+        });
+        column.width = Math.min(maxLength + 2, 40);
+      });
+
+      sheet.views = [{ state: 'frozen', xSplit: 1, ySplit: 1 }];
+      sheet.autoFilter = {
+        from: 'A1',
+        to: 'F1'
+      };
+
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename=relatorio_apresentacoes.xlsx');
+      await workbook.xlsx.write(res);
+      res.end();
+    });
+  } catch (error) {
+    console.error("Erro:", error);
+    res.status(500).send("Erro ao exportar Excel de apresentações.");
+  }
+});
+
+
+
 
 
 
@@ -1014,6 +1107,27 @@ app.get('/dados-razao-social', (req, res) => {
     }
   });
 });
+
+app.get('/dados-razao-apresentacao', (req, res) => {
+  const nome = req.query.nome;
+  const query = 'SELECT nome_fantasia, cnpj FROM razao_social WHERE razao_social = ? LIMIT 1';
+
+  db.query(query, [nome], (erro, resultados) => {
+    if (erro) {
+      console.error("Erro ao buscar dados da apresentação:", erro);
+      return res.status(500).json({ error: 'Erro interno ao buscar dados' });
+    }
+
+    if (resultados.length > 0) {
+      res.json(resultados[0]);
+    } else {
+      res.status(404).json({ error: 'Razão Social não encontrada' });
+    }
+  });
+});
+
+
+
 
 // rota para carregar quem é cliente
 app.get('/clientes', (req, res) => {
@@ -1512,6 +1626,486 @@ app.get("/churns-por-razao", (req, res) => {
 });
 
 const fetch = require("node-fetch");
+
+// cadastrar apresentacao
+app.post("/cadastrar-apresentacao", (req, res) => {
+  const { razao_social, nome_fantasia, cnpj, data_cliente } = req.body;
+
+  // Converte data_cliente de dd/mm/yyyy para yyyy-mm-dd
+  const [dia, mes, ano] = data_cliente.split('/');
+  const data_cadastro = `${ano}-${mes}-${dia}`;
+
+  // Pega data atual no formato yyyy-mm-dd
+  const hoje = new Date();
+  const data_apresentacao = hoje.toISOString().split("T")[0];
+
+  const sql = `
+    INSERT INTO apresentacao (razao_social, nome_fantasia, cnpj, data_cadastro, data_apresentacao)
+    VALUES (?, ?, ?, ?, ?)
+  `;
+
+  db.query(sql, [razao_social, nome_fantasia, cnpj, data_cadastro, data_apresentacao], (err, result) => {
+    if (err) {
+      console.error("❌ Erro ao cadastrar apresentação:", err);
+      return res.status(500).json({ sucesso: false, mensagem: "Erro no banco de dados" });
+    }
+
+    return res.status(200).json({ sucesso: true, mensagem: "✅ Apresentação cadastrada com sucesso!" });
+  });
+});
+
+// listar apresentacao
+app.get("/apresentacoes", (req, res) => {
+  const sql = `
+    SELECT razao_social, nome_fantasia, cnpj, data_cadastro, data_apresentacao
+    FROM apresentacao
+    ORDER BY data_apresentacao DESC
+  `;
+
+  db.query(sql, (err, resultados) => {
+    if (err) {
+      console.error("❌ Erro ao buscar apresentações:", err);
+      return res.status(500).json({ erro: "Erro ao buscar apresentações" });
+    }
+
+    res.json(resultados);
+  });
+});
+
+// apresentacao modal
+app.get("/apresentacoes-funcionalidades", (req, res) => {
+  const sql = `
+    SELECT t.razao_social, t.nome_fantasia, t.cnpj, t.data_abertura, t.titulo, t.tipo
+    FROM tickets t
+    INNER JOIN apresentacao a ON t.razao_social = a.razao_social
+    WHERE t.tipo IN ('funcionalidade', 'sistema')
+      AND DATE(t.data_abertura) BETWEEN DATE_SUB(CURDATE(), INTERVAL 2 DAY) AND CURDATE()
+    ORDER BY t.data_abertura DESC
+  `;
+
+  db.query(sql, (err, resultados) => {
+    if (err) {
+      console.error("❌ Erro ao buscar tickets de funcionalidades e sistema para apresentações:", err);
+      return res.status(500).json({ erro: "Erro ao buscar dados." });
+    }
+
+    res.json(resultados);
+  });
+});
+
+
+app.get("/funcionalidades-por-razao", (req, res) => {
+  const razao = req.query.razao;
+
+  const sql = `
+    SELECT 
+      t.funcionalidade,
+      t.sistema,
+      t.tipo,
+      t.data_abertura
+    FROM tickets t
+    WHERE t.tipo IN ('funcionalidade', 'sistema')
+      AND t.razao_social = ?
+      AND DATE(t.data_abertura) BETWEEN DATE_SUB(CURDATE(), INTERVAL 2 DAY) AND CURDATE()
+    ORDER BY t.data_abertura DESC
+  `;
+
+  db.query(sql, [razao], (err, resultados) => {
+    if (err) {
+      console.error("Erro ao buscar funcionalidades/sistemas:", err);
+      return res.status(500).json({ erro: "Erro ao buscar dados." });
+    }
+
+    // Junta funcionalidade e sistema em uma coluna única para o front
+    const dadosFormatados = resultados.map(row => ({
+      funcionalidade: row.funcionalidade || row.sistema || "-",
+      tipo: row.tipo,
+      data_abertura: row.data_abertura
+    }));
+
+    res.json(dadosFormatados);
+  });
+});
+
+
+// Salva observacao e data apresentacao na tabela apresentacao
+
+app.post("/salvar-observacao", (req, res) => {
+  const { razao_social, observacao, data_apresentacao } = req.body;
+
+  const sql = `
+    UPDATE apresentacao
+    SET observacao = ?, data_apresentacao = ?
+    WHERE razao_social = ?
+  `;
+
+  db.query(sql, [observacao, data_apresentacao, razao_social], (err, result) => {
+    if (err) {
+      console.error("❌ Erro ao salvar observação e data:", err);
+      return res.status(500).json({ sucesso: false, mensagem: "Erro ao salvar observação e data" });
+    }
+
+    res.json({ sucesso: true });
+  });
+});
+
+
+// tras a observacao e a data apresentacao no modal da tabela apresentacao 
+app.get("/apresentacao-detalhes", (req, res) => {
+  const razao = req.query.razao;
+
+  const sql = `
+    SELECT razao_social, nome_fantasia, cnpj, data_cadastro, data_apresentacao, observacao
+    FROM apresentacao
+    WHERE razao_social = ?
+    LIMIT 1
+  `;
+
+  db.query(sql, [razao], (err, results) => {
+    if (err) {
+      console.error("Erro ao buscar apresentação:", err);
+      return res.status(500).json({ erro: "Erro ao buscar dados da apresentação" });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ erro: "Apresentação não encontrada" });
+    }
+
+    res.json(results[0]);
+  });
+});
+
+// salvar razao social completo
+
+app.post('/cadastrar-razao-social', (req, res) => {
+  const {
+    razao_social,
+    nome_fantasia,
+    cnpj,
+    cliente,
+    data_cliente,
+    nome_a,
+    contato_a,
+    link_a,
+    nome_b,
+    contato_b,
+    link_b,
+    data_churn,
+    observacao
+  } = req.body;
+
+  // Primeiro verifica se o CNPJ já existe
+  const sqlVerificar = 'SELECT cnpj FROM razao_social WHERE cnpj = ?';
+
+  db.query(sqlVerificar, [cnpj], (err, resultados) => {
+    if (err) {
+      console.error('Erro ao verificar CNPJ:', err);
+      return res.status(500).json({ erro: 'Erro ao verificar CNPJ.' });
+    }
+
+    if (resultados.length > 0) {
+      // Já existe esse CNPJ
+      return res.status(400).json({ erro: 'CNPJ já cadastrado.' });
+    }
+
+    // Se não existir, então insere o novo cadastro
+    const sqlInserir = `
+      INSERT INTO razao_social 
+      (razao_social, nome_fantasia, cnpj, cliente, data_cliente, nome_a, contato_a, link_a, nome_b, contato_b, link_b, data_churn, observacao)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    db.query(sqlInserir, [
+      razao_social,
+      nome_fantasia,
+      cnpj,
+      cliente,
+      data_cliente,
+      nome_a,
+      contato_a,
+      link_a,
+      nome_b,
+      contato_b,
+      link_b,
+      data_churn,
+      observacao
+    ], (err, resultado) => {
+      if (err) {
+        console.error('Erro ao cadastrar razão social:', err);
+        return res.status(500).json({ erro: 'Erro ao cadastrar razão social.' });
+      }
+      res.status(201).json({ mensagem: 'Cadastro realizado com sucesso!' });
+    });
+  });
+});
+
+
+//Listar razão social na pagina cadastrar razao social
+
+app.get('/listar-razao-social', (req, res) => {
+  let pagina = parseInt(req.query.pagina) || 1;
+  let limite = parseInt(req.query.limite) || 20;
+  let offset = (pagina - 1) * limite;
+  let filtro = req.query.filtro || 'todos';
+
+  let sql = `
+    SELECT razao_social, nome_fantasia, cnpj, cliente, DATE_FORMAT(data_cliente, '%Y-%m-%d') AS data_cliente
+    FROM razao_social
+  `;
+
+  const params = [];
+
+  if (filtro === 'cliente') {
+    sql += ` WHERE cliente = 1 `;
+  }
+
+  sql += ` ORDER BY razao_social ASC LIMIT ? OFFSET ?`;
+  params.push(limite, offset);
+
+  db.query(sql, params, (err, resultados) => {
+    if (err) {
+      console.error('Erro ao buscar razões sociais:', err);
+      return res.status(500).json({ erro: 'Erro ao buscar razões sociais.' });
+    }
+    res.json(resultados);
+  });
+});
+
+
+
+// roda carregar todos os dados do modal da razao social
+// Buscar todos os dados de uma razão social específica
+app.get('/dados-completos-razao-social', (req, res) => {
+  const nome = req.query.nome;
+
+  const sql = `
+    SELECT 
+    id,
+      razao_social,
+      nome_fantasia,
+      cnpj,
+      cliente,
+      DATE_FORMAT(data_cliente, '%Y-%m-%d') AS data_cliente, 
+      nome_a,
+      contato_a,
+      link_a,
+      nome_b,
+      contato_b,
+      link_b,
+      observacao
+    FROM razao_social
+    WHERE razao_social = ?
+    LIMIT 1
+  `;
+
+  db.query(sql, [nome], (erro, resultados) => {
+    if (erro) {
+      console.error("Erro ao buscar razão social:", erro);
+      return res.status(500).json({ error: 'Erro interno ao buscar razão social' });
+    }
+
+    if (resultados.length > 0) {
+      res.json(resultados[0]);
+    } else {
+      res.status(404).json({ error: 'Razão Social não encontrada' });
+    }
+  });
+});
+
+// editar dados razao social
+
+app.post('/atualizar-razao-social', (req, res) => {
+  const {
+    id,
+    razao_social,
+    nome_fantasia,
+    cnpj,
+    cliente,
+    data_cliente,
+    nome_a,
+    contato_a,
+    link_a,
+    nome_b,
+    contato_b,
+    link_b,
+    observacao
+  } = req.body;
+
+  if (!id || !razao_social || !cnpj) {
+    return res.status(400).json({ erro: 'ID, razão social e CNPJ são obrigatórios.' });
+  }
+
+  const dataClienteFinal = data_cliente && data_cliente.trim() !== '' ? data_cliente : null; // 👈 Agora no lugar certo
+
+  const sqlAtualizar = `
+    UPDATE razao_social 
+    SET 
+      razao_social = ?, 
+      nome_fantasia = ?, 
+      cnpj = ?, 
+      cliente = ?, 
+      data_cliente = ?, 
+      nome_a = ?, 
+      contato_a = ?, 
+      link_a = ?, 
+      nome_b = ?, 
+      contato_b = ?, 
+      link_b = ?, 
+      observacao = ?
+    WHERE id = ?
+  `;
+
+  db.query(sqlAtualizar, [
+    razao_social,
+    nome_fantasia,
+    cnpj,
+    cliente,
+    dataClienteFinal, // 👈 Usando agora certo
+    nome_a,
+    contato_a,
+    link_a,
+    nome_b,
+    contato_b,
+    link_b,
+    observacao,
+    id
+  ], (err, resultado) => {
+    if (err) {
+      console.error('Erro ao atualizar razão social:', err);
+      return res.status(500).json({ erro: 'Erro ao atualizar razão social.' });
+    }
+
+    if (resultado.affectedRows === 0) {
+      return res.status(404).json({ erro: 'Razão social não encontrada.' });
+    }
+
+    res.status(200).json({ mensagem: 'Atualização realizada com sucesso!' });
+  });
+});
+
+
+// rota pesquisar razao social ou cnpj
+
+app.get('/buscar-razao-social', (req, res) => {
+  const termo = req.query.termo || '';
+  const pagina = parseInt(req.query.pagina) || 1;
+  const limite = parseInt(req.query.limite) || 50;
+  const offset = (pagina - 1) * limite;
+
+  const sql = `
+    SELECT DISTINCT razao_social, nome_fantasia, cnpj, cliente, DATE_FORMAT(data_cliente, '%Y-%m-%d') AS data_cliente
+    FROM razao_social
+    WHERE razao_social LIKE ? OR cnpj LIKE ?
+    ORDER BY razao_social ASC
+    LIMIT ? OFFSET ?
+  `;
+
+  const parametros = [`%${termo}%`, `%${termo}%`, limite, offset];
+
+  db.query(sql, parametros, (err, resultados) => {
+    if (err) {
+      console.error('Erro ao buscar razão social:', err);
+      return res.status(500).json({ erro: 'Erro ao buscar razão social.' });
+    }
+    res.json(resultados);
+  });
+});
+
+
+
+
+
+
+
+
+
+// Rota para contar quantos clientes ativos existem
+app.get('/contar-clientes', (req, res) => {
+  const sql = `SELECT COUNT(*) AS total FROM razao_social WHERE cliente = 1`;
+
+  db.query(sql, (err, resultado) => {
+    if (err) {
+      console.error("Erro ao contar clientes:", err);
+      return res.status(500).json({ erro: "Erro ao contar clientes." });
+    }
+    res.json({ total: resultado[0].total });
+  });
+});
+
+
+
+
+app.post('/importar-razao', upload.single('arquivo'), (req, res) => {
+  try {
+    const caminhoArquivo = req.file.path;
+    const workbook = xlsx.readFile(caminhoArquivo);
+    const primeiraAba = workbook.SheetNames[0];
+    const planilha = workbook.Sheets[primeiraAba];
+    const dados = xlsx.utils.sheet_to_json(planilha, { header: 1 });
+
+    const linhas = dados.slice(0); // Começa da primeira linha mesmo (não pula cabeçalho)
+    const inseridos = [];
+
+    const promises = linhas.map(linha => {
+      return new Promise(resolve => {
+        const razao_social = (linha[0] || '').toString().trim();
+        let cnpj = (linha[1] || '').toString().trim();
+
+        if (!razao_social || !cnpj) {
+          return resolve(); // pula se vazio
+        }
+
+        cnpj = cnpj.replace(/\D/g, '');
+
+        if (cnpj.length !== 14) {
+          console.warn(`CNPJ inválido para: ${razao_social}`);
+          return resolve();
+        }
+
+        db.query('SELECT id FROM razao_social WHERE cnpj = ?', [cnpj], (err, result) => {
+          if (err) {
+            console.error('Erro ao consultar:', err);
+            return resolve();
+          }
+
+          if (result.length === 0) {
+            db.query(
+              'INSERT INTO razao_social (razao_social, cnpj) VALUES (?, ?)',
+              [razao_social, cnpj],
+              (errInsert) => {
+                if (!errInsert) {
+                  inseridos.push(razao_social);
+                } else {
+                  console.error('Erro ao inserir:', errInsert);
+                }
+                resolve();
+              }
+            );
+          } else {
+            resolve(); // já existe
+          }
+        });
+      });
+    });
+
+    Promise.all(promises).then(() => {
+      fs.unlinkSync(caminhoArquivo);
+      res.json({
+        sucesso: true,
+        total: inseridos.length,
+        inseridos
+      });
+    });
+
+  } catch (erro) {
+    console.error('Erro ao importar razão social:', erro);
+    res.status(500).json({ sucesso: false, erro: 'Erro ao importar razão social' });
+  }
+});
+
+
+
+
 
 
 

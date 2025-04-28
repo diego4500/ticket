@@ -309,6 +309,7 @@ exportarExcel.addEventListener("change", async (event) => {
     case "churn": url = "exportar-excel-churn"; break;
     case "cliente_churn": url = "exportar-excel-cliente-churn"; break; // ⬅️ Aqui!
     case "sistema": url = "exportar-excel-sistema"; break;
+    case "apresentacao": url = "exportar-excel-apresentacao"; break;
     default:
       console.warn("Valor não reconhecido.");
       return;

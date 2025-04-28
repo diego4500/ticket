@@ -62,8 +62,22 @@ body {
 
 }
 
+.flexJ {
+    
+    flex-direction: column;
+    width: 100%;
+    align-items: flex-end;
+    /* ⬅️ alinha tudo à direita */
+
+}
+
 #arquivo{
     width: 345px;
+}
+
+.cnpj-c{
+    margin-left: 42px;
+    margin-right: 36px;
 }
 
 .flexD {
@@ -73,6 +87,48 @@ body {
     align-items: flex-end;
     /* ⬅️ alinha tudo à direita */
     padding-left: 20px;
+}
+
+.flexDireita{
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    
+}
+
+#filtroCliente{
+  width: 150px;
+}
+.flex-esquerda {
+    width: 100%;
+    display: flex;
+    justify-content: flex-start; /* alinhado à esquerda */
+    align-items: center;         /* centralizado verticalmente */
+    margin-bottom: 12px;
+  }
+
+  #statusEditavel{
+    
+    width: 150px;
+  }
+  
+  #cadastrar_razao{
+    height: 44px;
+    margin-top: 35px;
+  }
+
+
+.logoNaoAutorizado{
+    width: 257px;
+}
+
+.flexG {
+    display: flex;
+    width: 100%;
+    justify-content: flex-end; /* Alinha os itens à direita horizontalmente */
+    align-items: flex-end;     /* Alinha os itens à base verticalmente */
+    padding-left: 20px;        /* Pode remover se estiver deslocando para a esquerda */
+    padding-right: 10px;
 }
 
 
@@ -143,13 +199,48 @@ body {
     /* Adicionado para ocupar o espaço restante */
 }
 
+.div-extremidades {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+
 .tituloH {
     text-align: left;
     font-size: 25px;
 }
+.tituloHB {
+  text-align: left;
+  font-size: 25px;
+  margin-top: 32px;
+  margin-left: 40px;
+}
+
+.buscar{
+  width: 287px;
+  margin-top: 26px;
+  margin-left: 28px;
+  display: flex;
+}
+
+.lupa{
+  font-size: 28px;
+  margin-left: 12px;
+  margin-top: 20px;
+  color: #666;
+  transform: translateY(-50%);
+  cursor: pointer; /* mãozinha no mouse */
+  transition: all 0.3s ease; /* animação suave */
+}
+
+.lupa:hover {
+  transform: translateY(-50%) scale(1.2); /* aumenta um pouquinho */
+  color: #2C34C9; /* muda para o azul do seu sistema */
+}
 
 .container {
-    width: 1024px;
+    width: 1200px;
     
     background: white;
     padding: 10px 50px;
@@ -780,6 +871,11 @@ table.tabela-relatorio th {
     display: flex;
 }
 
+.formFlexB {
+    width: 100%;
+    display: flex;
+}
+
 #tenant {
     padding: 12px 9px 12px 9px;
     width: 300px !important;
@@ -824,16 +920,48 @@ table.tabela-relatorio th {
     justify-content: center;
     align-items: center;
   }
+
+  .modal{
+    display:none;
+    position:fixed; top:0; left:0; right:0; bottom:0; 
+    background:rgba(0,0,0,0.5); 
+    justify-content:center; 
+    align-items:center; 
+    z-index:999;
+  }
+  .conteudoModal{
+    background:#fff; 
+    
+    max-width:1000px; 
+    width:90%; max-height:90vh; 
+    overflow:auto;
+  }
   
   .modal-locsis-conteudo {
     background: white;
-    width: 600px;
-    max-width: 95%;
+       
     border-radius: 8px;
     padding: 0;
     box-shadow: 0 10px 25px rgba(0,0,0,0.2);
     overflow: hidden;
     font-family: Arial, sans-serif;
+  }
+
+  .flexModal{
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap; /* para quebrar a linha se não couber */
+    gap: 10px; /* espaço entre os itens */
+    align-items: center; /* alinha verticalmente ao centro */
+  }
+  
+
+  .modal-body {
+    padding: 15px;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px 30px;
+    font-size: 14px;
+    color: #444;
   }
   
   .modal-locsis-header {
@@ -909,4 +1037,138 @@ table.tabela-relatorio th {
     padding: 0 20px 20px 0; /* margem interna pra afastar da borda */
   }
 
+  /* Modal cadastro de razao */
+
+  .modal-mod {
+    width: 1060px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    
+    display: flex;
+    flex-direction: column;
+  }
+
+  .modal-header {
+    background: #2C34C9;
+    color: white;
+    padding: 10px;
+   
+    margin-bottom: 20px;
+    font-size: 20px;
+  }
+
+  .flexModal {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+
+
+  .modal-footer {
+    right: 50px !important;
+    text-align: right;
+  }
+
+  .modal-btn {
+    background: #2C34C9;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 14px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+
+  .modal-btn:hover {
+    background: #181D77;
+  }
+
+  .campo{
+    padding-right: 40px;
+  }
+
+  .conteudoModalB{
+    background:#fff;  
+     
+    max-height:90vh; 
+    overflow:auto;
+  }
+
+  .inputGrande{
+    width: 530px;
+  }
+
+  .inputMedio{
+    width: 350px;
+  }
+
+  .checkboxRazao{    
+    width: 21px;
+    height: 25px;     
+  }
+
+  .campoB{
+    padding-right: 40px;
+    padding-top: 25px;
+  }
+
+  .observacaoRazao{
+    height: 150px;
+  }
+
+  .desativarBotao {
+    background-color: #4a4a4a;
+    /* Cinza escuro */
+    color: white;
+    cursor: not-allowed;
+    /* Mostra que o botão está desativado */
+    opacity: 0.6;
+    /* Deixa o botão visualmente desativado */
+    pointer-events: none;
+    /* Impede qualquer clique no botão */
+  }
+
+  /*sugestoes do campo input d cadastrar razao*/
+
+  .sugestoesContainer {
+    position: absolute;
+    background: white;
+    border: 1px solid #ccc;
+    max-height: 150px;
+    overflow-y: auto;
+    width: 100%;
+    z-index: 1000;
+    top: 100%; /* Posiciona logo abaixo do input */
+    left: 0;
+  }
+  
+  .sugestao-item {
+    padding: 8px;
+    cursor: pointer;
+  }
+  
+  .sugestao-item:hover {
+    background-color: #f0f0f0;
+  }
+
+
+/* contador clientes */
+
+.display-container {
+  background-color: #2C34C9; /* fundo preto */
+  padding: 10px 10px;
+  border-radius: 7px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+  margin-left: 0px;
+  width: 100px;
+}
+
+.display {
+  
+  font-size: 20px;
+  color: white; /* números brancos */
+  letter-spacing: 5px;
+  text-align: center;
+}
  

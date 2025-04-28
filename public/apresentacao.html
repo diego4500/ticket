@@ -6,8 +6,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Apresentação</title>
   <link rel="stylesheet" href="style/style.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <!--Link da biblioteca para exportar excel -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
+
 </head>
 
 <body>
@@ -22,7 +26,7 @@
           <form id="formAlterar" class="form-flex">
             <div class="flexD">
                 <div class="alterarCliente">
-                    <label for="tenant">Alterar Dados Cliente:</label>
+                    <label for="tenant">Razão Social:</label>
                     <input type="text" id="tenant" required autocomplete="off" placeholder="Digite a razão social*" required />
                 </div>
                 <div>
@@ -33,19 +37,22 @@
                         <div id="sugestoesB" class="sugestoes-lista"></div>
                     </div>
                 </div>
+                <div class="cnpj-c">
+                  <label for="cnpj">CNPJ:</label>
+                  <input type="text" id="cnpjB" disabled autocomplete="off">
+              </div>
+         
+              <div class="date">
+                <label for="date">Data início RD: </label>
+                <input type="date" id="dataCliente">
+              </div>
+                
 
             </div>
-            <div class="flexF">
-                <div class="check">
-                    <label for="cliente">Cliente:</label>
-                    <input type="checkbox" id="cliente">
-                </div>
-                <div class="date">
-                  <label for="date">Data é Cliente:</label>
-                  <input type="date" id="dataCliente">
-                </div>
+            <div class="flexG">    
+              <p class="grafana" id="botaoAtualizarRazao" style="cursor: pointer;">Atualizar Razão Social</p>     
+                <button class="alterar" type="submit">Cadastrar</button>
                 
-                <button class="alterar" type="submit">Alterar</button>
             </div>
         </form>
         </div>
