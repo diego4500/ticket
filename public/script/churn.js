@@ -72,9 +72,9 @@ function abrirModalChurn(dadosEmpresa) {
         const info = lista[0];
         const ultimoChurn = lista[lista.length - 1].data_churn;
   
-        const dataClienteBR = info.data_cliente
-        ? formatarDataIsoParaBR(info.data_cliente)
-        : "-";
+ const dataClienteBR = info.data_cliente
+  ? formatarDataIsoParaBR(info.data_cliente)
+  : "-";
         const dataUltimoChurnISO = ultimoChurn ? new Date(ultimoChurn).toISOString().split("T")[0] : "";
 
   

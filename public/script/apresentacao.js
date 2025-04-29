@@ -369,6 +369,8 @@ function abrirModalFuncionalidadeComCheckbox(razaoSocial) {
       });
 
       setTimeout(() => {
+
+        
         const checkAll = document.getElementById("selecionarTodosFunc");
         const checkboxes = document.querySelectorAll(".checkbox-func");
 
@@ -437,6 +439,8 @@ ${observacoes || "-"}`;
                 .then(res => res.json())
                 .then(res => {
                   if (res.sucesso) {
+                    abrirModalFuncionalidadeComCheckbox(dadosEmpresa.razao_social);
+
                     const botaoCopiar = document.getElementById("copiarFuncionalidades");
                     botaoCopiar.textContent = "Copiado e salvo!";
                     botaoCopiar.style.backgroundColor = "#28a745"; // verde sucesso
@@ -522,5 +526,9 @@ function carregarFuncionalidadesRecentes() {
       container.innerHTML = "<p style='margin-top: 20px;'>Erro ao carregar dados.</p>";
     });
 }
+
+document.getElementById("dataApresentacao").addEventListener("change", function () {
+  abrirModalFuncionalidadeComCheckbox(dadosEmpresa.razao_social);
+});
 
 
