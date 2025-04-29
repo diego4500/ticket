@@ -282,22 +282,24 @@ function carregarApresentacoes() {
 
 function abrirModalFuncionalidadeComCheckbox(razaoSocial) {
   Promise.all([
-    fetch(`/apresentacao-detalhes?razao=${encodeURIComponent(razaoSocial)}`).then(res => res.json()),
-    fetch(`/funcionalidades-por-razao?razao=${encodeURIComponent(razaoSocial)}`).then(res => res.json())
+    fetch(`/apresentacao-detalhes?razao=${encodeURIComponent(razaoSocial)}`).then(res => res.json())
   ])
-    .then(([dadosEmpresa, lista]) => {
-      const modal = document.getElementById("modal");
-      const conteudo = document.getElementById("conteudoModal");
+  .then(async ([dadosEmpresa]) => {
+    const modal = document.getElementById("modal");
+    const conteudo = document.getElementById("conteudoModal");
 
-      const dataCadastroBR = dadosEmpresa.data_cadastro ? new Date(dadosEmpresa.data_cadastro).toLocaleDateString("pt-BR") : "-";
+    const dataCadastroBR = dadosEmpresa.data_cadastro ? new Date(dadosEmpresa.data_cadastro).toLocaleDateString("pt-BR") : "-";
+    const dataApresentacaoInput = dadosEmpresa.data_apresentacao 
+      ? new Date(dadosEmpresa.data_apresentacao).toISOString().split("T")[0] 
+      : "";
 
-      const dataApresentacaoInput = dadosEmpresa.data_apresentacao 
-        ? new Date(dadosEmpresa.data_apresentacao).toISOString().split("T")[0] 
-        : ""; // <-- Aqui formatado certinho pro input
-      
-      const textoObservacao = dadosEmpresa.observacao || "";
-      
-      let html = `
+    const textoObservacao = dadosEmpresa.observacao || "";
+
+    // 🔵 Buscar funcionalidades já filtradas pela nova rota
+    const lista = await fetch(`/funcionalidades-por-cnpj-data-apresentacao?cnpj=${encodeURIComponent(dadosEmpresa.cnpj)}`)
+      .then(res => res.json());
+
+    let html = `
       <div style="background-color: #2C34C9; color: white; padding: 12px; font-weight: bold; font-size: 20px; border-radius: 6px 6px 0 0;">
         Apresentação
       </div>
@@ -305,12 +307,12 @@ function abrirModalFuncionalidadeComCheckbox(razaoSocial) {
         <div style="margin-bottom: 12px;"><strong style="color: #2C34C9;">Razão Social:</strong> <span>${dadosEmpresa.razao_social}</span></div>
         <div style="margin-bottom: 12px;"><strong style="color: #2C34C9;">Nome Fantasia:</strong> <span>${dadosEmpresa.nome_fantasia || "-"}</span></div>
         <div style="margin-bottom: 12px;"><strong style="color: #2C34C9;">CNPJ:</strong> <span>${dadosEmpresa.cnpj}</span></div>
-        <div style="margin-bottom: 12px;"><strong style="color: #2C34C9; ">Data Cadastro:</strong> <span>${dataCadastroBR}</span></div>
-        <div class="flex-esquerda style="margin-bottom: 20px;">
-  <label for="dataApresentacao" style="color: #2C34C9; font-weight: bold; margin: 0px !important;     font-size: 15px;">Data Apresentação:</label>
-  <input type="date" id="dataApresentacao" value="${dataApresentacaoInput}" style="padding: 5px; font-size: 14px; margin-top: 4px; width: 150px; margin-left: 5px;">
+        <div style="margin-bottom: 12px;"><strong style="color: #2C34C9;">Data Cadastro:</strong> <span>${dataCadastroBR}</span></div>
 
-</div>
+        <div class="flex-esquerda" style="margin-bottom: 20px;">
+          <label for="dataApresentacao" style="color: #2C34C9; font-weight: bold; margin: 0px !important; font-size: 15px;">Data Apresentação:</label>
+          <input type="date" id="dataApresentacao" value="${dataApresentacaoInput}" style="padding: 5px; font-size: 14px; margin-top: 4px; width: 150px; margin-left: 5px;">
+        </div>
 
         <div style="margin-bottom: 10px;"><strong>Histórico de Funcionalidades:</strong></div>
 
@@ -324,17 +326,16 @@ function abrirModalFuncionalidadeComCheckbox(razaoSocial) {
           <tbody>
     `;
 
-      lista.forEach(item => {
-        html += `
+    lista.forEach(item => {
+      html += `
         <tr>
           <td style="text-align: center; padding: 8px;">
-           <input type="checkbox" class="checkbox-func" value="${item.funcionalidade}" data-tipo="${item.tipo}" checked>
-
+            <input type="checkbox" class="checkbox-func" value="${item.funcionalidade}" data-tipo="${item.tipo}" checked>
           </td>
           <td style="padding: 8px;">${item.funcionalidade || "-"}</td>
         </tr>
       `;
-      });
+    });
 
       html += `
           </tbody>

@@ -242,7 +242,8 @@ app.get('/tickets', (req, res) => {
       status,
       DATE_FORMAT(data_abertura, '%d/%m/%Y') AS data_abertura,
       chamado,
-      descricao
+      descricao,
+      card
   FROM tickets
   ORDER BY ticket DESC
 `;
@@ -263,20 +264,27 @@ app.get('/tickets', (req, res) => {
 // Rota modal adicionar descrição
 
 app.post('/atualizar-descricao', (req, res) => {
-  const { ticket, descricao, status } = req.body;
+  const { ticket, descricao, status, card, bug = 0, melhoria = 0 } = req.body;
+
+
 
   const isFechado = status.toLowerCase() === "fechado";
 
   const sql = `
-    UPDATE tickets
-    SET descricao = ?,
-        status = ?${isFechado ? `,
-        data_fechamento = IF(data_fechamento IS NULL, CURDATE(), data_fechamento),
-        hora_fechamento = IF(hora_fechamento IS NULL, CURTIME(), hora_fechamento)` : ''}
-    WHERE ticket = ?
-  `;
+  UPDATE tickets
+  SET descricao = ?,
+      status = ?,
+      card = ?,
+      bug = ?,
+      melhoria = ?
+      ${isFechado ? `,
+      data_fechamento = IF(data_fechamento IS NULL, CURDATE(), data_fechamento),
+      hora_fechamento = IF(hora_fechamento IS NULL, CURTIME(), hora_fechamento)` : ''}
+  WHERE ticket = ?
+`;
 
-  const params = [descricao, status, ticket];
+
+const params = [descricao, status, card, bug, melhoria, ticket];
 
   db.query(sql, params, (err, result) => {
     if (err) {
@@ -297,21 +305,24 @@ app.get('/tickets-filtrado', (req, res) => {
 
   let sql = `
     SELECT 
-      t.ticket, 
-      t.atendente, 
-      t.razao_social, 
-      t.tipo, 
-      CONCAT_WS('', COALESCE(t.titulo, ''), COALESCE(t.churn, ''), COALESCE(t.funcionalidade, ''), COALESCE(t.sistema, '')) AS titulo,
-      t.status,
-      DATE_FORMAT(t.data_abertura, '%d/%m/%Y') AS data_abertura,
-      IFNULL(DATE_FORMAT(t.data_fechamento, '%d/%m/%Y'), '-') AS data_fechamento,
-      t.hora,
-      IFNULL(t.hora_fechamento, '-') AS hora_fechamento,
-      t.chamado,
-      t.descricao,
-      CASE TRIM(t.cliente) WHEN '1' THEN '✅' ELSE '❌' END AS cliente
+  t.ticket, 
+  t.atendente, 
+  t.razao_social, 
+  t.tipo, 
+  CONCAT_WS('', COALESCE(t.titulo, ''), COALESCE(t.churn, ''), COALESCE(t.funcionalidade, ''), COALESCE(t.sistema, '')) AS titulo,
+  t.status,
+  DATE_FORMAT(t.data_abertura, '%d/%m/%Y') AS data_abertura,
+  IFNULL(DATE_FORMAT(t.data_fechamento, '%d/%m/%Y'), '-') AS data_fechamento,
+  t.hora,
+  IFNULL(t.hora_fechamento, '-') AS hora_fechamento,
+  t.chamado,
+  t.descricao,
+  t.card,
+  t.bug,
+  t.melhoria,
+  CASE TRIM(t.cliente) WHEN '1' THEN '✅' ELSE '❌' END AS cliente
+FROM tickets t
 
-    FROM tickets t
   `;
 
   const params = [];
@@ -403,6 +414,13 @@ const ExcelJS = require('exceljs');
 
 // Exporta excel todos
 
+// Função para formatar CNPJ
+const formatarCNPJ = (cnpj) => {
+  if (!cnpj) return '';
+  cnpj = cnpj.toString().replace(/\D/g, '').padStart(14, '0');
+  return `${cnpj.substring(0, 2)}.${cnpj.substring(2, 5)}.${cnpj.substring(5, 8)}/${cnpj.substring(8, 12)}-${cnpj.substring(12, 14)}`;
+};
+
 app.get('/exportar-excel', autenticado, async (req, res) => {
   try {
     const query = `SELECT * FROM tickets ORDER BY id DESC`;
@@ -413,6 +431,17 @@ app.get('/exportar-excel', autenticado, async (req, res) => {
         return res.status(500).send("Erro ao gerar relatório.");
       }
 
+      // 🔵 Aqui tratamos conforme você pediu:
+      const dadosTratados = results.map(item => ({
+        ...item,
+        cnpj: formatarCNPJ(item.cnpj),
+        cliente: item.cliente === 1 ? "É Cliente" : "Não Cliente",
+        card: item.card ?? '',
+        bug: item.bug === 1 ? "É Bug" : '',
+        melhoria: item.melhoria === 1 ? "É Melhoria" : '',
+        impeditivo: item.impeditivo === 1 ? "Sim" : "Não" // ✅ Nova regra para impedimento
+      }));
+
       const workbook = new ExcelJS.Workbook();
       const sheet = workbook.addWorksheet("Relatório");
 
@@ -422,7 +451,6 @@ app.get('/exportar-excel', autenticado, async (req, res) => {
           const ordemFinal = ['data_abertura', 'hora', 'data_fechamento', 'hora_fechamento'];
           const aFinal = ordemFinal.includes(a.name);
           const bFinal = ordemFinal.includes(b.name);
-
           if (aFinal && !bFinal) return 1;
           if (!aFinal && bFinal) return -1;
           return 0;
@@ -434,7 +462,7 @@ app.get('/exportar-excel', autenticado, async (req, res) => {
         }));
 
       sheet.columns = colunas;
-      sheet.addRows(results);
+      sheet.addRows(dadosTratados);
 
       sheet.columns.forEach(column => {
         let maxLength = column.header.length;
@@ -470,10 +498,9 @@ app.get('/exportar-excel', autenticado, async (req, res) => {
   }
 });
 
-
 // excel funcionalidade
 
-app.get('/exportar-excel-funcionalidade', autenticado,async (req, res) => {
+app.get('/exportar-excel-funcionalidade', autenticado, async (req, res) => {
   try {
     const query = `SELECT * FROM tickets WHERE tipo = 'funcionalidade' ORDER BY id DESC`;
 
@@ -506,15 +533,34 @@ app.get('/exportar-excel-funcionalidade', autenticado,async (req, res) => {
 
       sheet.columns = camposFiltrados;
 
-      const dadosFiltrados = results.map(row => {
+      // 🔵 Trata os dados conforme solicitado
+      const dadosTratados = results.map(row => {
         const novo = {};
+
         camposFiltrados.forEach(coluna => {
-          novo[coluna.key] = row[coluna.key];
+          const key = coluna.key;
+
+          if (key === 'cnpj') {
+            novo[key] = formatarCNPJ(row[key]);
+          } else if (key === 'cliente') {
+            novo[key] = row[key] === 1 ? "É Cliente" : "Não Cliente";
+          } else if (key === 'card') {
+            novo[key] = row[key] ?? '';
+          } else if (key === 'bug') {
+            novo[key] = row[key] === 1 ? "É Bug" : '';
+          } else if (key === 'melhoria') {
+            novo[key] = row[key] === 1 ? "É Melhoria" : '';
+          } else if (key === 'impeditivo') {
+            novo[key] = row[key] === 1 ? "Sim" : "Não";
+          } else {
+            novo[key] = row[key];
+          }
         });
+
         return novo;
       });
 
-      sheet.addRows(dadosFiltrados);
+      sheet.addRows(dadosTratados);
 
       sheet.columns.forEach(column => {
         let maxLength = column.header.length;
@@ -552,7 +598,10 @@ app.get('/exportar-excel-funcionalidade', autenticado,async (req, res) => {
 
 
 
-// excel duvida
+
+
+
+
 app.get('/exportar-excel-duvidas', autenticado, async (req, res) => {
   try {
     const query = `SELECT * FROM tickets WHERE tipo = 'duvida' ORDER BY id DESC`;
@@ -588,15 +637,34 @@ app.get('/exportar-excel-duvidas', autenticado, async (req, res) => {
 
       sheet.columns = camposFiltrados;
 
-      const dadosFiltrados = results.map(row => {
+      // 🔵 Trata os dados conforme solicitado
+      const dadosTratados = results.map(row => {
         const novo = {};
+
         camposFiltrados.forEach(coluna => {
-          novo[coluna.key] = row[coluna.key];
+          const key = coluna.key;
+
+          if (key === 'cnpj') {
+            novo[key] = formatarCNPJ(row[key]);
+          } else if (key === 'cliente') {
+            novo[key] = row[key] === 1 ? "É Cliente" : "Não Cliente";
+          } else if (key === 'card') {
+            novo[key] = row[key] ?? '';
+          } else if (key === 'bug') {
+            novo[key] = row[key] === 1 ? "É Bug" : '';
+          } else if (key === 'melhoria') {
+            novo[key] = row[key] === 1 ? "É Melhoria" : '';
+          } else if (key === 'impeditivo') {
+            novo[key] = row[key] === 1 ? "Sim" : "Não";
+          } else {
+            novo[key] = row[key];
+          }
         });
+
         return novo;
       });
 
-      sheet.addRows(dadosFiltrados);
+      sheet.addRows(dadosTratados);
 
       sheet.columns.forEach(column => {
         let maxLength = column.header.length;
@@ -631,6 +699,7 @@ app.get('/exportar-excel-duvidas', autenticado, async (req, res) => {
     res.status(500).send("Erro ao exportar Excel de dúvidas.");
   }
 });
+
 
 
 
@@ -1177,23 +1246,27 @@ app.get('/ticket/:id', (req, res) => {
 
   const sql = `
     SELECT 
-      t.ticket, 
-      t.atendente, 
-      t.razao_social, 
-      t.tipo, 
-      CONCAT_WS('', COALESCE(t.titulo, ''), COALESCE(t.churn, ''), COALESCE(t.funcionalidade, ''), COALESCE(t.sistema, '')) AS titulo,
-      t.status,
-      DATE_FORMAT(t.data_abertura, '%d/%m/%Y') AS data_abertura,
-      IFNULL(DATE_FORMAT(t.data_fechamento, '%d/%m/%Y'), '-') AS data_fechamento,
-      t.hora,
-      IFNULL(t.hora_fechamento, '-') AS hora_fechamento,
-      t.chamado,
-      t.descricao,
-      CASE rs.cliente WHEN 1 THEN 'Sim' ELSE 'Não' END AS cliente
-    FROM tickets t
-    LEFT JOIN razao_social rs ON BINARY TRIM(rs.razao_social) = BINARY TRIM(t.razao_social)
-    WHERE t.ticket = ?
-    LIMIT 1
+  t.ticket, 
+  t.atendente, 
+  t.razao_social, 
+  t.tipo, 
+  CONCAT_WS('', COALESCE(t.titulo, ''), COALESCE(t.churn, ''), COALESCE(t.funcionalidade, ''), COALESCE(t.sistema, '')) AS titulo,
+  t.status,
+  DATE_FORMAT(t.data_abertura, '%d/%m/%Y') AS data_abertura,
+  IFNULL(DATE_FORMAT(t.data_fechamento, '%d/%m/%Y'), '-') AS data_fechamento,
+  t.hora,
+  IFNULL(t.hora_fechamento, '-') AS hora_fechamento,
+  t.chamado,
+  t.descricao,
+  t.card,
+  t.bug,
+  t.melhoria,
+  CASE rs.cliente WHEN 1 THEN 'Sim' ELSE 'Não' END AS cliente
+FROM tickets t
+LEFT JOIN razao_social rs ON BINARY TRIM(rs.razao_social) = BINARY TRIM(t.razao_social)
+WHERE t.ticket = ?
+LIMIT 1
+
   `;
 
   db.query(sql, [id], (err, result) => {
@@ -1727,6 +1800,41 @@ app.get("/funcionalidades-por-razao", (req, res) => {
   });
 });
 
+// rota tras funcionalidades da apresentacao
+
+app.get('/funcionalidades-por-cnpj-data-apresentacao', (req, res) => {
+  let cnpj = req.query.cnpj;
+  if (!cnpj) {
+    return res.status(400).json({ erro: 'CNPJ não fornecido' });
+  }
+
+  // Remove pontos, traços e barras do CNPJ
+  cnpj = cnpj.replace(/[.\-\/]/g, '');
+
+  const sql = `
+    SELECT t.funcionalidade, t.tipo, t.data_abertura
+    FROM tickets t
+    INNER JOIN apresentacao a
+      ON REPLACE(REPLACE(REPLACE(t.cnpj, '.', ''), '-', ''), '/', '') = REPLACE(REPLACE(REPLACE(a.cnpj, '.', ''), '-', ''), '/', '')
+    WHERE REPLACE(REPLACE(REPLACE(t.cnpj, '.', ''), '-', ''), '/', '') = ?
+      AND t.tipo = 'funcionalidade'
+      AND DATE(t.data_abertura) = DATE(a.data_apresentacao)
+    ORDER BY t.data_abertura DESC
+  `;
+
+  db.query(sql, [cnpj], (err, resultados) => {
+    if (err) {
+      console.error("Erro ao buscar funcionalidades:", err);
+      return res.status(500).json({ erro: "Erro ao buscar funcionalidades." });
+    }
+
+    res.json(resultados);
+  });
+});
+
+
+
+
 
 // Salva observacao e data apresentacao na tabela apresentacao
 
@@ -1748,6 +1856,8 @@ app.post("/salvar-observacao", (req, res) => {
     res.json({ sucesso: true });
   });
 });
+
+
 
 
 // tras a observacao e a data apresentacao no modal da tabela apresentacao 
@@ -2102,6 +2212,108 @@ app.post('/importar-razao', upload.single('arquivo'), (req, res) => {
     res.status(500).json({ sucesso: false, erro: 'Erro ao importar razão social' });
   }
 });
+
+// rota sugestão de sistemas
+
+app.get("/sugestoes-sistema", (req, res) => {
+  const termo = req.query.q || '';
+
+  const sql = `
+    SELECT sistema 
+    FROM sistema_titulo 
+    WHERE sistema LIKE ?
+    ORDER BY sistema ASC
+  `;
+
+  const parametro = `%${termo}%`;
+
+  db.query(sql, [parametro], (erro, resultados) => {
+    if (erro) {
+      console.error("Erro ao buscar sistemas:", erro);
+      return res.status(500).json({ erro: "Erro ao buscar sistemas" });
+    }
+
+    const sistemas = resultados.map(item => item.sistema);
+    res.json(sistemas);
+  });
+});
+
+// rota cadastrar sistema
+
+app.post("/cadastrar-sistema", (req, res) => {
+  const { sistema, usuario } = req.body;
+
+  if (!sistema || !usuario) {
+    return res.status(400).json({ sucesso: false, mensagem: "Dados inválidos para cadastro." });
+  }
+
+  const sql = `
+    INSERT INTO sistema_titulo (sistema, usuario, data_hora)
+    VALUES (?, ?, NOW())
+  `;
+
+  db.query(sql, [sistema, usuario], (erro, resultado) => {
+    if (erro) {
+      console.error("Erro ao cadastrar sistema:", erro);
+      return res.status(500).json({ sucesso: false, mensagem: "Erro ao cadastrar sistema." });
+    }
+
+    res.json({ sucesso: true });
+  });
+});
+
+
+// rota sugestão de dúvida
+
+app.get("/sugestoes-duvida", (req, res) => {
+  const termo = req.query.q || '';
+
+  const sql = `
+    SELECT duvida 
+    FROM duvida_titulo 
+    WHERE duvida LIKE ?
+    ORDER BY duvida ASC
+  `;
+
+  const parametro = `%${termo}%`;
+
+  db.query(sql, [parametro], (erro, resultados) => {
+    if (erro) {
+      console.error("Erro ao buscar dúvidas:", erro);
+      return res.status(500).json({ erro: "Erro ao buscar dúvidas" });
+    }
+
+    const duvidas = resultados.map(item => item.duvida);
+    res.json(duvidas);
+  });
+});
+
+
+// rota cadastrar dúvida
+
+app.post("/cadastrar-duvida", (req, res) => {
+  const { duvida, usuario } = req.body;
+
+  if (!duvida || !usuario) {
+    return res.status(400).json({ sucesso: false, mensagem: "Dados inválidos para cadastro." });
+  }
+
+  const sql = `
+    INSERT INTO duvida_titulo (duvida, usuario, data_hora)
+    VALUES (?, ?, NOW())
+  `;
+
+  db.query(sql, [duvida, usuario], (erro, resultado) => {
+    if (erro) {
+      console.error("Erro ao cadastrar dúvida:", erro);
+      return res.status(500).json({ sucesso: false, mensagem: "Erro ao cadastrar dúvida." });
+    }
+
+    res.json({ sucesso: true });
+  });
+});
+
+
 
 
 

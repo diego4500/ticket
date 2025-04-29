@@ -100,6 +100,22 @@ const adicionarNaTabela = (dados) => {
         <p><strong>Tipo:</strong> ${primeiraMaiuscula(item.tipo)}</p>
         <p><strong>Título:</strong> ${primeiraMaiuscula(item.titulo)}</p>
       </div>
+      <div style="display: flex;"> 
+            <div style="margin-right: 66px;">
+              <p><strong>Número card DevOps: </strong></p>              
+              <input type="text" id="numero_card" name="quantidade" value="${item.card || ''}" style="width: 130px;">
+
+            </div>
+            <div>
+              <p><strong>Tipo do card: </strong></p>
+             <select id="tipoCard" name="tipo">
+                <option value="">Selecione</option>
+                 <option value="bug" ${item.bug === 1 ? "selected" : ""}>Bug</option>
+               <option value="melhoria" ${item.melhoria === 1 ? "selected" : ""}>Melhoria</option>
+              </select>
+
+            </div>
+          </div>
       <div style="grid-column: span 2; display: flex; gap: 20px; align-items: center;">
         <p><strong>Razão Social:</strong> ${primeiraMaiuscula(item.razao_social)}</p>
         <p><strong>Cliente:</strong> ${primeiraMaiuscula(linha.dataset.cliente)}</p>
@@ -180,14 +196,34 @@ document.getElementById("formEditarDescricao").addEventListener("submit", async 
   const novaDescricao = document.getElementById("descricaoEditavel").value;
   const statusSelect = document.getElementById("statusEditavel");
   const novoStatus = statusSelect.disabled ? "fechado" : statusSelect.value;
+  const cardInput = document.getElementById("numero_card"); 
+  const card = cardInput ? cardInput.value : null;
 
-  const resposta = await fetch("/atualizar-descricao", {
+  const tipoCardSelect = document.getElementById("tipoCard");
+  const tipoSelecionado = tipoCardSelect ? tipoCardSelect.value : "";
+
+   // Define valores
+   let bug = 0;
+   let melhoria = 0;
+ 
+   if (tipoSelecionado === "bug") {
+     bug = 1;
+   } else if (tipoSelecionado === "melhoria") {
+     melhoria = 1;
+   }
+
+
+
+   const resposta = await fetch("/atualizar-descricao", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       ticket: ticketAtual,
       descricao: novaDescricao,
-      status: novoStatus
+      status: novoStatus,
+      card: card,
+      bug: bug,
+      melhoria: melhoria
     })
   });
 
@@ -255,6 +291,21 @@ document.getElementById("formEditarDescricao").addEventListener("submit", async 
           <div>
             <p><strong>Tipo:</strong> ${primeiraMaiuscula(dados.tipo)}</p>
             <p><strong>Título:</strong> ${primeiraMaiuscula(dados.titulo)}</p>
+          </div>
+          <div style="display: flex;"> 
+            <div style="margin-right: 66px;">
+              <p><strong>Número card DevOps: </strong></p>              
+              <input type="text" id="numero_card" name="quantidade" value="${item.card || ''}" style="width: 130px;">
+
+            </div>
+            <div>
+              <p><strong>Tipo do card: </strong></p>
+              <select id="tipoCard" name="tipo">
+                <option value="">Selecione</option>
+                 <option value="bug" ${item.bug === 1 ? "selected" : ""}>Bug</option>
+               <option value="melhoria" ${item.melhoria === 1 ? "selected" : ""}>Melhoria</option>
+              </select>
+            </div>
           </div>
           <div style="grid-column: span 2; display: flex; gap: 20px; align-items: center;">
             <p><strong>Razão Social:</strong> ${primeiraMaiuscula(dados.razao_social)}</p>
@@ -368,11 +419,7 @@ function ativarBotaoSalvarEdicao() {
 }
 
 
-document.addEventListener("input", function (event) {
-  if (event.target && event.target.id === "descricaoEditavel") {
-    ativarBotaoSalvarEdicao();
-  }
-});
+
 
 document.addEventListener("change", function (event) {
   if (event.target && event.target.id === "statusEditavel") {
@@ -412,5 +459,19 @@ document.getElementById("fecharBotao").addEventListener("click", async () => {
   criarCabecalho();
   await carregarTicketsFiltrado();
   containerCarregar.style.display = "block";
+});
+
+document.addEventListener("input", function (event) {
+  if (!event.target) return;
+
+  const { id, value } = event.target;
+
+  if (
+    (id === "descricaoEditavel") ||
+    (id === "numero_card" && value.trim().length > 0) ||
+    (id === "tipoCard" && value.trim() !== "")
+  ) {
+    ativarBotaoSalvarEdicao();
+  }
 });
 

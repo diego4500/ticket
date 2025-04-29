@@ -139,7 +139,8 @@ formulario.addEventListener("submit", async (e) => {
     descricaoPreenchida = false;
     
     const razao = document.getElementById("razao_social").value;
-    const cnpj = document.getElementById("cnpjB").value;
+    const cnpj = limparCNPJ(document.getElementById("cnpjB").value);
+
     const cliente = document.getElementById("clienteB").checked;
 
     const nomeFantasia = document.getElementById("nome_fantasiaB").value;
@@ -338,7 +339,8 @@ function fecharTicket() {
 
     const clienteCheckbox = document.getElementById("clienteB");
     clienteCheckbox.checked = false;
-    clienteCheckbox.disabled = false;
+    clienteCheckbox.disabled = true;
+
     // Desativa o botão salvar
     /*desativarBotaoSalvar();*/
 }
@@ -407,7 +409,7 @@ function preencherCamposComDadosSalvos() {
 
     const checkbox = document.getElementById("clienteB");
     checkbox.checked = cliente;
-    checkbox.disabled = cliente;
+    checkbox.disabled = true; // Sempre deixa desabilitado ✅
 
     
     if (nomeFantasia) document.getElementById("nome_fantasiaB").value = nomeFantasia;
@@ -524,7 +526,8 @@ function aposSalvar() {
             if (campo === "clienteB") {
                 const check = document.getElementById("clienteB");
                 check.checked = valor === "true";
-                check.disabled = valor === "true";
+                check.disabled = true;
+
             } else {
                 document.getElementById(campo).value = valor;
             }
@@ -654,10 +657,6 @@ function duvidaSelecionada() {
     novaDiv.classList.add("duvida");
 
     novaDiv.innerHTML = `
-        <div class="check">
-            <label for="card">Abrir Card?</label>
-            <input type="checkbox" id="card">
-        </div>
         <div class="flex">
             <div class="filho">
                 <div class="status">
@@ -686,7 +685,7 @@ function duvidaSelecionada() {
 
     divGerada.appendChild(novaDiv);
 
-   // criarSugestaoAoClicar("menu_duvida", "sugestoesMenu", menu, (itemSelecionado) => { });
+    sugestaoDuvida(); 
 
     const campoDescricao = document.getElementById("descricao");
     const campoTitulo = document.getElementById("titulo");
@@ -706,10 +705,7 @@ function funcionalidadeSelecionada() {
     novaDiv.style.display = "block"; // exibe a div gerada
 
     novaDiv.innerHTML = `
-        <div class="check">
-            <label for="card">Abrir Card?</label>
-            <input type="checkbox" id="card">
-        </div> 
+       
         <div class="flex">
     <div class="filho">
         <div class="status">
@@ -780,11 +776,13 @@ function sistemasSelecionado() {
         <input type="text" id="sistemas_cadastrada" name="sistemas_cadastrada" autocomplete="off" required>
         <div id="sugestoesMenu"></div>
     </div>`;
+
     divGerada.appendChild(novaDiv);
 
-    let motivo = juntaFuncionalidadeMotivo(funcionalidade, motivos);
-   // criarSugestaoAoClicar("sistemas_cadastrada", "sugestoesMenu", sistemas, (itemSelecionado) => {    });
+    // ⚡ Correção: chama a função para ativar sugestões!
+    sugestaoSistema();
 }
+
 
 function razaoSocialSugestoes(razao) {
     sugestoesDiv.innerHTML = '';
@@ -805,7 +803,8 @@ function razaoSocialSugestoes(razao) {
                 div.addEventListener('mousedown', () => {
                     itemSelecionadoRazao = true;
                     razaoInput.value = empresa.razao_social;
-                    document.getElementById('cnpjB').value = empresa.cnpj;
+                    const cnpjFormatado = formatarCNPJ(empresa.cnpj);
+                    document.getElementById('cnpjB').value = cnpjFormatado;
 
                     fetch(`/dados-razao-social?nome=${encodeURIComponent(empresa.razao_social)}`)
                         .then(res => res.json())
@@ -821,7 +820,7 @@ function razaoSocialSugestoes(razao) {
                             nomeFantasiaInput.style.backgroundColor = "#e0e0e0";
 
                             clienteCheckbox.checked = dados?.cliente === 1 || dados?.cliente === '1'; // ⚠️ compare como string OU número
-                            clienteCheckbox.disabled = dados?.cliente === 1 || dados?.cliente === '1';
+                            clienteCheckbox.disabled = true;
 
                             cnpjInput.disabled = true;
                             cnpjInput.style.backgroundColor = "#e0e0e0";
@@ -867,92 +866,97 @@ razaoInput.addEventListener('blur', () => {
 function sugestaoFuncionalidade() {
     const input = document.getElementById("funcionalidade_cadastrada");
     const sugestoesDiv = document.getElementById("sugestoesMenu");
-  
+
     if (!input || !sugestoesDiv) return;
-  
+
     let itemSelecionado = false;
-  
+
     function montarSugestoes(resultados) {
-      sugestoesDiv.innerHTML = "";
-  
-      if (resultados.length > 0) {
-        resultados.forEach(item => {
-          const div = document.createElement("div");
-          div.textContent = item.charAt(0).toUpperCase() + item.slice(1);
-  
-          div.addEventListener("click", () => {
-            input.value = item.charAt(0).toUpperCase() + item.slice(1);
-            sugestoesDiv.style.display = "none";
-            itemSelecionado = true;
-          });
-  
-          sugestoesDiv.appendChild(div);
-        });
-  
-        sugestoesDiv.style.display = "block";
-      } else {
-        // Nenhuma sugestão encontrada
-        sugestoesDiv.innerHTML = "<div style='padding: 8px;'>Nenhuma sugestão encontrada</div>";
-  
-        // Cria botão de cadastro
-        criarBotaoCadastro("Cadastrar Funcionalidade", sugestoesDiv, async () => {
-          const novaFuncionalidade = input.value.trim();
-          if (novaFuncionalidade.length === 0) return;
-  
-          const resposta = await fetch("/cadastrar-funcionalidade", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              funcionalidade: novaFuncionalidade,
-              usuario: nomeUsuarioLogado
-            })
-          });
-  
-          const resultado = await resposta.json();
-  
-          if (resposta.ok && resultado.sucesso) {
-            alert("✅ Funcionalidade cadastrada com sucesso!");
-            sugestoesDiv.style.display = "none";
-          } else {
-            alert("❌ Erro ao cadastrar funcionalidade.");
-          }
-        });
-  
-        sugestoesDiv.style.display = "block";
-      }
+        sugestoesDiv.innerHTML = "";
+
+        if (resultados.length > 0) {
+            resultados.forEach(item => {
+                const div = document.createElement("div");
+                div.textContent = item.charAt(0).toUpperCase() + item.slice(1);
+
+                div.addEventListener("click", () => {
+                    input.value = item.charAt(0).toUpperCase() + item.slice(1);
+                    sugestoesDiv.style.display = "none";
+                    itemSelecionado = true;
+                });
+
+                sugestoesDiv.appendChild(div);
+            });
+
+            sugestoesDiv.style.display = "block";
+        } else {
+            sugestoesDiv.innerHTML = "<div style='padding: 8px;'>Nenhuma sugestão encontrada</div>";
+
+            // 🚀 Aqui o container dos botões
+            const containerBotoes = document.createElement("div");
+            containerBotoes.classList.add("sugestoes-container-botoes"); // Estilo igual ao do churn
+
+            criarBotaoCadastro("Cadastrar Funcionalidade", containerBotoes, async () => {
+                const novaFuncionalidade = input.value.trim();
+                if (novaFuncionalidade.length === 0) return;
+
+                const resposta = await fetch("/cadastrar-funcionalidade", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        funcionalidade: novaFuncionalidade,
+                        usuario: nomeUsuarioLogado
+                    })
+                });
+
+                const resultado = await resposta.json();
+
+                if (resposta.ok && resultado.sucesso) {
+                    alert("✅ Funcionalidade cadastrada com sucesso!");
+                    sugestoesDiv.style.display = "none";
+                } else {
+                    alert("❌ Erro ao cadastrar funcionalidade.");
+                }
+            });
+
+            // ⬇️ adiciona o container com o botão
+            sugestoesDiv.appendChild(containerBotoes);
+            sugestoesDiv.style.display = "block";
+        }
     }
-  
+
     function mostrarSugestoes() {
-      sugestoesDiv.innerHTML = "";
-      itemSelecionado = false;
-  
-      const termo = input.value.trim().toLowerCase();
-      if (termo.length < 1) {
-        sugestoesDiv.style.display = "none";
-        return;
-      }
-  
-      fetch(`/sugestoes-funcionalidade?q=${encodeURIComponent(termo)}`)
-        .then(res => res.json())
-        .then(montarSugestoes)
-        .catch(err => {
-          console.error("Erro ao buscar funcionalidades:", err);
-          sugestoesDiv.style.display = "none";
-        });
+        sugestoesDiv.innerHTML = "";
+        itemSelecionado = false;
+
+        const termo = input.value.trim().toLowerCase();
+        if (termo.length < 1) {
+            sugestoesDiv.style.display = "none";
+            return;
+        }
+
+        fetch(`/sugestoes-funcionalidade?q=${encodeURIComponent(termo)}`)
+            .then(res => res.json())
+            .then(montarSugestoes)
+            .catch(err => {
+                console.error("Erro ao buscar funcionalidades:", err);
+                sugestoesDiv.style.display = "none";
+            });
     }
-  
+
     input.addEventListener("click", mostrarSugestoes);
     input.addEventListener("input", mostrarSugestoes);
-  
+
     input.addEventListener("blur", () => {
-      setTimeout(() => {
-        if (!itemSelecionado) {
-          input.value = "";
-        }
-        sugestoesDiv.style.display = "none";
-      }, 200);
+        setTimeout(() => {
+            if (!itemSelecionado) {
+                input.value = "";
+            }
+            sugestoesDiv.style.display = "none";
+        }, 200);
     });
-  }
+}
+
   
   // sugestão churn
 
@@ -1068,6 +1072,205 @@ function sugestaoFuncionalidade() {
         sugestoesDiv.style.display = "none";
       }, 200);
     });
+  }
+
+  // sugestões sitema
+
+  function sugestaoSistema() {
+    const input = document.getElementById("sistemas_cadastrada");
+    const sugestoesDiv = document.getElementById("sugestoesMenu");
+  
+    if (!input || !sugestoesDiv) return;
+  
+    let itemSelecionado = false;
+  
+    function montarSugestoes(resultados) {
+      sugestoesDiv.innerHTML = "";
+  
+      if (resultados.length > 0) {
+        resultados.forEach(item => {
+          const div = document.createElement("div");
+          div.textContent = item.charAt(0).toUpperCase() + item.slice(1);
+  
+          div.addEventListener("click", () => {
+            input.value = item.charAt(0).toUpperCase() + item.slice(1);
+            sugestoesDiv.style.display = "none";
+            itemSelecionado = true;
+          });
+  
+          sugestoesDiv.appendChild(div);
+        });
+  
+        sugestoesDiv.style.display = "block";
+      } else {
+        sugestoesDiv.innerHTML = "<div style='padding: 8px;'>Nenhuma sugestão encontrada</div>";
+  
+        const containerBotoes = document.createElement("div");
+        containerBotoes.classList.add("sugestoes-container-botoes");
+  
+        // Botão: Cadastrar Sistema
+        criarBotaoCadastro("Cadastrar Sistema", containerBotoes, async () => {
+          const novoSistema = input.value.trim();
+          if (novoSistema.length === 0) return;
+  
+          const resposta = await fetch("/cadastrar-sistema", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              sistema: novoSistema,
+              usuario: nomeUsuarioLogado
+            })
+          });
+  
+          const resultado = await resposta.json();
+  
+          if (resposta.ok && resultado.sucesso) {
+            alert("✅ Sistema cadastrado com sucesso!");
+            sugestoesDiv.style.display = "none";
+          } else {
+            alert("❌ Erro ao cadastrar sistema.");
+          }
+        });
+  
+        sugestoesDiv.appendChild(containerBotoes);
+        sugestoesDiv.style.display = "block";
+      }
+    }
+  
+    function mostrarSugestoes() {
+      sugestoesDiv.innerHTML = "";
+      itemSelecionado = false;
+  
+      const termo = input.value.trim().toLowerCase();
+      if (termo.length < 1) {
+        sugestoesDiv.style.display = "none";
+        return;
+      }
+  
+      fetch(`/sugestoes-sistema?q=${encodeURIComponent(termo)}`)
+        .then(res => res.json())
+        .then(montarSugestoes)
+        .catch(err => {
+          console.error("Erro ao buscar sistemas:", err);
+          sugestoesDiv.style.display = "none";
+        });
+    }
+  
+    input.addEventListener("click", mostrarSugestoes);
+    input.addEventListener("input", mostrarSugestoes);
+  
+    input.addEventListener("blur", () => {
+      setTimeout(() => {
+        if (!itemSelecionado) input.value = "";
+        sugestoesDiv.style.display = "none";
+      }, 200);
+    });
+  }
+
+  function sugestaoDuvida() {
+    const input = document.getElementById("menu_duvida");
+    const sugestoesDiv = document.getElementById("sugestoesMenu");
+  
+    if (!input || !sugestoesDiv) return;
+  
+    let itemSelecionado = false;
+  
+    function montarSugestoes(resultados) {
+      sugestoesDiv.innerHTML = "";
+  
+      if (resultados.length > 0) {
+        resultados.forEach(item => {
+          const div = document.createElement("div");
+          div.textContent = item.charAt(0).toUpperCase() + item.slice(1);
+  
+          div.addEventListener("click", () => {
+            input.value = item.charAt(0).toUpperCase() + item.slice(1);
+            sugestoesDiv.style.display = "none";
+            itemSelecionado = true;
+          });
+  
+          sugestoesDiv.appendChild(div);
+        });
+  
+        sugestoesDiv.style.display = "block";
+      } else {
+        sugestoesDiv.innerHTML = "<div style='padding: 8px;'>Nenhuma sugestão encontrada</div>";
+  
+        const containerBotoes = document.createElement("div");
+        containerBotoes.classList.add("sugestoes-container-botoes");
+  
+        criarBotaoCadastro("Cadastrar Dúvida", containerBotoes, async () => {
+          const novaDuvida = input.value.trim();
+          if (novaDuvida.length === 0) return;
+  
+          const resposta = await fetch("/cadastrar-duvida", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              duvida: novaDuvida,
+              usuario: nomeUsuarioLogado
+            })
+          });
+  
+          const resultado = await resposta.json();
+  
+          if (resposta.ok && resultado.sucesso) {
+            alert("✅ Dúvida cadastrada com sucesso!");
+            sugestoesDiv.style.display = "none";
+          } else {
+            alert("❌ Erro ao cadastrar dúvida.");
+          }
+        });
+  
+        sugestoesDiv.appendChild(containerBotoes);
+        sugestoesDiv.style.display = "block";
+      }
+    }
+  
+    function mostrarSugestoes() {
+      sugestoesDiv.innerHTML = "";
+      itemSelecionado = false;
+  
+      const termo = input.value.trim().toLowerCase();
+      if (termo.length < 1) {
+        sugestoesDiv.style.display = "none";
+        return;
+      }
+  
+      fetch(`/sugestoes-duvida?q=${encodeURIComponent(termo)}`)
+        .then(res => res.json())
+        .then(montarSugestoes)
+        .catch(err => {
+          console.error("Erro ao buscar dúvidas:", err);
+          sugestoesDiv.style.display = "none";
+        });
+    }
+  
+    input.addEventListener("click", mostrarSugestoes);
+    input.addEventListener("input", mostrarSugestoes);
+  
+    input.addEventListener("blur", () => {
+      setTimeout(() => {
+        if (!itemSelecionado) input.value = "";
+        sugestoesDiv.style.display = "none";
+      }, 200);
+    });
+  }
+  
+  
+
+  function formatarCNPJ(cnpj) {
+    if (!cnpj) return '';
+
+    cnpj = cnpj.replace(/[^\d]+/g, ''); // Remove qualquer coisa que não for número
+
+    if (cnpj.length !== 14) return cnpj; // Se não tiver 14 dígitos, retorna do jeito que está
+
+    return cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
+}
+  
+function limparCNPJ(cnpj) {
+    return cnpj.replace(/[^\d]+/g, '');
   }
   
   
