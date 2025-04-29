@@ -261,7 +261,8 @@ function carregarApresentacoes() {
           let valor = item[col] || "-";
 
           if (col.includes("data") && valor !== "-") {
-            const dataFormatada = new Date(valor).toLocaleDateString("pt-BR");
+            const dataFormatada = valor.split("T")[0].split("-").reverse().join("/");
+
             celula.textContent = dataFormatada;
           } else {
             celula.textContent = valor;
@@ -288,9 +289,13 @@ function abrirModalFuncionalidadeComCheckbox(razaoSocial) {
     const modal = document.getElementById("modal");
     const conteudo = document.getElementById("conteudoModal");
 
-    const dataCadastroBR = dadosEmpresa.data_cadastro ? new Date(dadosEmpresa.data_cadastro).toLocaleDateString("pt-BR") : "-";
+    const dataCadastroBR = dadosEmpresa.data_cadastro
+    ? dadosEmpresa.data_cadastro.split("T")[0].split("-").reverse().join("/")
+    : "-";
+  
+
     const dataApresentacaoInput = dadosEmpresa.data_apresentacao 
-      ? new Date(dadosEmpresa.data_apresentacao).toISOString().split("T")[0] 
+      ? dadosEmpresa.data_apresentacao.split("T")[0]
       : "";
 
     const textoObservacao = dadosEmpresa.observacao || "";
@@ -499,7 +504,7 @@ function carregarFuncionalidadesRecentes() {
           let valor = item[col] || "-";
 
           if (col === "data_abertura" && valor !== "-") {
-            valor = new Date(valor).toLocaleDateString("pt-BR");
+            valor = valor.split("T")[0].split("-").reverse().join("/");
           }
 
           celula.textContent = valor;
