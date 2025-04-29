@@ -290,7 +290,7 @@ function abrirModalFuncionalidadeComCheckbox(razaoSocial) {
     const conteudo = document.getElementById("conteudoModal");
 
     const dataCadastroBR = dadosEmpresa.data_cadastro
-    ? dadosEmpresa.data_cadastro.split("T")[0].split("-").reverse().join("/")
+    ? dadosEmpresa.data_cadastro.split("T")[0]
     : "-";
   
 
@@ -312,7 +312,9 @@ function abrirModalFuncionalidadeComCheckbox(razaoSocial) {
         <div style="margin-bottom: 12px;"><strong style="color: #2C34C9;">Razão Social:</strong> <span>${dadosEmpresa.razao_social}</span></div>
         <div style="margin-bottom: 12px;"><strong style="color: #2C34C9;">Nome Fantasia:</strong> <span>${dadosEmpresa.nome_fantasia || "-"}</span></div>
         <div style="margin-bottom: 12px;"><strong style="color: #2C34C9;">CNPJ:</strong> <span>${dadosEmpresa.cnpj}</span></div>
-        <div style="margin-bottom: 12px;"><strong style="color: #2C34C9;">Data Cadastro:</strong> <span>${dataCadastroBR}</span></div>
+        <div style="margin-bottom: 12px;"><strong style="color: #2C34C9;">Data Cadastro:</strong> 
+        <input type="date" id="dataCadastro" value="${dataCadastroBR}" style="padding: 5px; font-size: 14px; margin-top: 4px; width: 150px; margin-left: 5px;">
+        </div>
 
         <div class="flex-esquerda" style="margin-bottom: 20px;">
           <label for="dataApresentacao" style="color: #2C34C9; font-weight: bold; margin: 0px !important; font-size: 15px;">Data Apresentação:</label>
@@ -426,8 +428,10 @@ ${observacoes || "-"}`;
                 body: JSON.stringify({
                   razao_social: dadosEmpresa.razao_social,
                   observacao: observacoes,
-                  data_apresentacao: novaData
+                  data_apresentacao: novaData,
+                  data_cadastro: document.getElementById("dataCadastro").value
                 })
+                
               })
               
                 .then(res => res.json())

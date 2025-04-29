@@ -297,7 +297,7 @@ if (botaoCarregarMais) {
   // fim - Habilita ou desabilita o botao do chat
       document.getElementById('fecharModal').addEventListener('click', () => {
         document.getElementById('modal').style.display = 'none';
-        window.location.reload();
+       
       });
   
       document.getElementById('salvarEdicao').addEventListener('click', async (event) => {

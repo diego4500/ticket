@@ -1839,15 +1839,17 @@ app.get('/funcionalidades-por-cnpj-data-apresentacao', (req, res) => {
 // Salva observacao e data apresentacao na tabela apresentacao
 
 app.post("/salvar-observacao", (req, res) => {
-  const { razao_social, observacao, data_apresentacao } = req.body;
+  const { razao_social, observacao, data_apresentacao, data_cadastro } = req.body;
+
 
   const sql = `
     UPDATE apresentacao
-    SET observacao = ?, data_apresentacao = ?
-    WHERE razao_social = ?
+SET observacao = ?, data_apresentacao = ?, data_cadastro = ?
+WHERE razao_social = ?
+
   `;
 
-  db.query(sql, [observacao, data_apresentacao, razao_social], (err, result) => {
+  db.query(sql, [observacao, data_apresentacao, data_cadastro, razao_social], (err, results) => {
     if (err) {
       console.error("❌ Erro ao salvar observação e data:", err);
       return res.status(500).json({ sucesso: false, mensagem: "Erro ao salvar observação e data" });
@@ -2314,6 +2316,27 @@ app.post("/cadastrar-duvida", (req, res) => {
 });
 
 
+// salvar churn data
+
+app.post('/atualizar-churn', autenticado, (req, res) => {
+  const { razao_social, data_churn } = req.body;
+
+  const query = `
+    UPDATE churn 
+    SET data_churn = ?
+    WHERE razao_social = ? 
+    ORDER BY id DESC LIMIT 1
+  `;
+
+  db.query(query, [data_churn, razao_social], (err, result) => {
+    if (err) {
+      console.error("Erro ao atualizar churn:", err);
+      return res.status(500).json({ sucesso: false, mensagem: "Erro ao atualizar churn." });
+    }
+
+    res.json({ sucesso: true });
+  });
+});
 
 
 

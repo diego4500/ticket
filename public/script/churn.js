@@ -72,8 +72,11 @@ function abrirModalChurn(dadosEmpresa) {
         const info = lista[0];
         const ultimoChurn = lista[lista.length - 1].data_churn;
   
-        const dataClienteBR = info.data_cliente ? new Date(info.data_cliente).toLocaleDateString("pt-BR") : "-";
-        const dataUltimoChurnBR = ultimoChurn ? new Date(ultimoChurn).toLocaleDateString("pt-BR") : "-";
+        const dataClienteBR = info.data_cliente
+        ? formatarDataIsoParaBR(info.data_cliente)
+        : "-";
+        const dataUltimoChurnISO = ultimoChurn ? new Date(ultimoChurn).toISOString().split("T")[0] : "";
+
   
         let html = `
           <div style="background-color: #2C34C9; color: white; padding: 12px; font-weight: bold; font-size: 20px; border-radius: 6px 6px 0 0;">
@@ -84,7 +87,9 @@ function abrirModalChurn(dadosEmpresa) {
             <div style="margin-bottom: 12px;"><strong style="color: #2C34C9;">Nome Fantasia:</strong> <span id="infoFantasia">${info.nome_fantasia || "-"}</span></div>
             <div style="margin-bottom: 12px;"><strong style="color: #2C34C9;">CNPJ:</strong> <span id="infoCNPJ">${info.cnpj}</span></div>
             <div style="margin-bottom: 12px;"><strong style="color: #2C34C9;">Data Cliente:</strong> <span id="infoCliente">${dataClienteBR}</span></div>
-            <div style="margin-bottom: 20px;"><strong style="color: #2C34C9;">Data Último Churn:</strong> <span id="infoChurn">${dataUltimoChurnBR}</span></div>
+            <div style="margin-bottom: 20px;"><strong style="color: #2C34C9;">Data Último Churn:</strong> 
+            <input type="date" id="dataApresentacao" value="${dataUltimoChurnISO}" style="padding: 5px; font-size: 14px; margin-top: 4px; width: 150px; margin-left: 5px;">
+           
   
             <div style="margin-bottom: 10px;"><strong>Histórico de Churns:</strong></div>
   
@@ -117,7 +122,7 @@ function abrirModalChurn(dadosEmpresa) {
   
             <div style="text-align: right; margin-top: 20px;">
               <button id="fecharBotao">Fechar</button>
-              <button id="copiarDados">Copiar</button>
+              <button id="copiarDados">Copiar e Salvar</button>
             </div>
           </div>
         `;
@@ -126,6 +131,7 @@ function abrirModalChurn(dadosEmpresa) {
         modal.style.display = "flex";
   
         document.getElementById("fecharBotao").addEventListener("click", () => {
+          window.location.reload();
           modal.style.display = "none";
         });
   
@@ -153,42 +159,72 @@ function abrirModalChurn(dadosEmpresa) {
             const fantasia = document.getElementById("infoFantasia").textContent.trim();
             const cnpj = document.getElementById("infoCNPJ").textContent.trim();
             const dataCliente = document.getElementById("infoCliente").textContent.trim();
-            const dataChurn = document.getElementById("infoChurn").textContent.trim();
-  
-            const marcados = Array.from(document.querySelectorAll(".checkbox-churn:checked"))
-              .map(cb => `- ${cb.value}`)
-              .join("\n");
-  
-            const textoFinal = `❌ Pedido de Cancelamento 
-  
-  Razão Social: ${razao}
-  Nome Fantasia: ${fantasia}
-  CNPJ: ${cnpj}
-  Data Cliente: ${dataCliente}
-  Data do Churn: ${dataChurn}
-  
-  Motivos marcados:
-  ${marcados || "- Nenhum selecionado -"}`;
-  
-            navigator.clipboard.writeText(textoFinal)
-            const botaoCopiar = document.getElementById("copiarDados");
-
-            navigator.clipboard.writeText(textoFinal)
-              .then(() => {
-                botaoCopiar.textContent = "Copiado!";
-                botaoCopiar.style.backgroundColor = "#28a745"; // verde
-                botaoCopiar.style.color = "#fff";
-            
-                setTimeout(() => {
-                  botaoCopiar.textContent = "Copiar";
-                  botaoCopiar.style.backgroundColor = "";
-                  botaoCopiar.style.color = "";
-                }, 2000); // 2 segundos
+            const dataChurnInput = document.getElementById("dataApresentacao").value;
+          
+            // Atualizar no banco a nova data do churn
+            fetch("/atualizar-churn", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                razao_social: razao,
+                data_churn: dataChurnInput
               })
-              .catch(err => alert("❌ Erro ao copiar os dados."));
+            })
+              .then(res => res.json())
+              .then(resposta => {
+                if (!resposta.sucesso) {
+                  alert("❌ Erro ao salvar a nova data do churn.");
+                  return;
+                }
+          
+                // Copiar os dados após salvar
+                const marcados = Array.from(document.querySelectorAll(".checkbox-churn:checked"))
+                  .map(cb => `- ${cb.value}`)
+                  .join("\n");
+          
+                const textoFinal = `❌ Pedido de Cancelamento 
+            
+Razão Social: ${razao}
+Nome Fantasia: ${fantasia}
+CNPJ: ${cnpj}
+Data Cliente: ${dataCliente}
+Data do Churn: ${dataChurnInput.split("-").reverse().join("/")}
+          
+Motivos marcados:
+${marcados || "- Nenhum selecionado -"}`;
+          
+                const botaoCopiar = document.getElementById("copiarDados");
+          
+                navigator.clipboard.writeText(textoFinal)
+                  .then(() => {
+                    botaoCopiar.textContent = "Copiado!";
+                    botaoCopiar.style.backgroundColor = "#28a745";
+                    botaoCopiar.style.color = "#fff";
+          
+                    setTimeout(() => {
+                      botaoCopiar.textContent = "Copiar";
+                      botaoCopiar.style.backgroundColor = "";
+                      botaoCopiar.style.color = "";
+                    }, 2000);
+                  })
+                  .catch(err => alert("❌ Erro ao copiar os dados."));
+              })
+              .catch(() => alert("❌ Erro ao comunicar com o servidor."));
           });
+          
+          
         }, 0);
       });
+  }
+
+  function formatarDataIsoParaBR(dataISO) {
+    const data = new Date(dataISO);
+    const dia = String(data.getUTCDate()).padStart(2, '0');
+    const mes = String(data.getUTCMonth() + 1).padStart(2, '0'); // +1 porque começa em 0
+    const ano = data.getUTCFullYear();
+    return `${dia}/${mes}/${ano}`;
   }
   
   

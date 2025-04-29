@@ -237,7 +237,7 @@ document.getElementById('cadastrar_razao').addEventListener('click', function ()
 
   document.getElementById('cancelar').addEventListener('click', function () {
     document.getElementById('modal').style.display = 'none';
-    window.location.reload();
+  
 
   });
 
