@@ -1951,6 +1951,72 @@ app.post('/cadastrar-razao-social', (req, res) => {
   });
 });
 
+// importar grafana
+
+app.post('/importar_grafana', upload.single('arquivo'), (req, res) => {
+  console.log("🟢 POST /importar_grafana acionado");
+  console.log("🗂️ Arquivo recebido:", req.file?.originalname);
+
+  try {
+    const caminho = req.file.path;
+    const resultados = [];
+    let contador = 0;
+
+    fs.createReadStream(caminho)
+      .pipe(csv())
+      .on('data', (linha) => {
+        const normalizado = {};
+
+        // 🔧 Limpa todas as chaves do objeto
+        for (let chave in linha) {
+          const chaveLimpa = chave
+            .replace(/^\uFEFF/, '')   // remove BOM invisível do começo
+            .replace(/"/g, '')        // remove aspas duplas
+            .trim()                   // remove espaços em branco
+            .toLowerCase();           // transforma em letras minúsculas
+
+          normalizado[chaveLimpa] = linha[chave];
+        }
+
+        const tenant = normalizado["tenant"] || "";
+        const diasSemAcesso = parseInt(normalizado["dias sem acesso"] || 0);
+        const faturamento = parseInt(normalizado["qtd. fat. realizados"] || 0);
+
+        const cnpjEncontrado = (tenant.match(/\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}/) || [])[0];
+
+        if (cnpjEncontrado) {
+          const cnpj = cnpjEncontrado.replace(/\D/g, '');
+          contador++;
+          console.log(`[${contador}] 🔎 CNPJ: ${cnpj} | Sem Acesso: ${diasSemAcesso} | Faturamento: ${faturamento}`);
+          resultados.push({ cnpj, diasSemAcesso, faturamento });
+        }
+      })
+      .on('end', async () => {
+        let totalAtualizados = 0;
+
+        for (const { cnpj, diasSemAcesso, faturamento } of resultados) {
+          try {
+            await dbPromise.query(
+              'UPDATE razao_social SET sem_acesso = ?, faturamento = ? WHERE cnpj = ?',
+              [diasSemAcesso, faturamento, cnpj]
+            );
+            totalAtualizados++;
+          } catch (erroAtualizacao) {
+            console.error(`Erro ao atualizar CNPJ ${cnpj}:`, erroAtualizacao);
+          }
+        }
+
+        fs.unlinkSync(caminho);
+        res.json({ sucesso: true, totalAtualizados });
+      });
+  } catch (erro) {
+    console.error("Erro ao importar dados do Grafana:", erro);
+    res.status(500).json({ sucesso: false, erro: "Erro ao importar dados." });
+  }
+});
+
+
+
 
 //Listar razão social na pagina cadastrar razao social
 
@@ -1960,8 +2026,23 @@ app.get('/listar-razao-social', (req, res) => {
   let offset = (pagina - 1) * limite;
   let filtro = req.query.filtro || 'todos';
 
+  const ordenarPor = req.query.ordenarPor || 'razao_social';
+  const direcao = req.query.direcao === 'DESC' ? 'DESC' : 'ASC';
+
+  // Protege contra SQL Injection permitindo apenas certos campos para ordenação:
+  const colunasPermitidas = ['razao_social', 'sem_acesso', 'faturamento', 'data_vencimento'];
+  const colunaOrdenacao = colunasPermitidas.includes(ordenarPor) ? ordenarPor : 'razao_social';
+
   let sql = `
-    SELECT razao_social, nome_fantasia, cnpj, cliente, DATE_FORMAT(data_cliente, '%Y-%m-%d') AS data_cliente
+    SELECT 
+      razao_social, 
+      nome_fantasia, 
+      cnpj, 
+      cliente, 
+      DATE_FORMAT(data_cliente, '%Y-%m-%d') AS data_cliente,
+      DATE_FORMAT(data_vencimento, '%Y-%m-%d') AS data_vencimento,
+      sem_acesso,
+      faturamento
     FROM razao_social
   `;
 
@@ -1971,7 +2052,7 @@ app.get('/listar-razao-social', (req, res) => {
     sql += ` WHERE cliente = 1 `;
   }
 
-  sql += ` ORDER BY razao_social ASC LIMIT ? OFFSET ?`;
+  sql += ` ORDER BY ${colunaOrdenacao} ${direcao} LIMIT ? OFFSET ?`;
   params.push(limite, offset);
 
   db.query(sql, params, (err, resultados) => {
@@ -1985,6 +2066,8 @@ app.get('/listar-razao-social', (req, res) => {
 
 
 
+
+
 // roda carregar todos os dados do modal da razao social
 // Buscar todos os dados de uma razão social específica
 app.get('/dados-completos-razao-social', (req, res) => {
@@ -1992,7 +2075,7 @@ app.get('/dados-completos-razao-social', (req, res) => {
 
   const sql = `
     SELECT 
-    id,
+      id,
       razao_social,
       nome_fantasia,
       cnpj,
@@ -2004,7 +2087,10 @@ app.get('/dados-completos-razao-social', (req, res) => {
       nome_b,
       contato_b,
       link_b,
-      observacao
+      observacao,
+      dia_vencimento,
+      DATE_FORMAT(data_vencimento, '%Y-%m-%d') AS data_vencimento,
+      qt_licenca
     FROM razao_social
     WHERE razao_social = ?
     LIMIT 1
@@ -2027,6 +2113,8 @@ app.get('/dados-completos-razao-social', (req, res) => {
 // editar dados razao social
 
 app.post('/atualizar-razao-social', (req, res) => {
+  
+
   const {
     id,
     razao_social,
@@ -2040,14 +2128,18 @@ app.post('/atualizar-razao-social', (req, res) => {
     nome_b,
     contato_b,
     link_b,
-    observacao
+    observacao,
+    dia_vencimento,
+    data_vencimento,
+    qt_licenca
   } = req.body;
 
   if (!id || !razao_social || !cnpj) {
     return res.status(400).json({ erro: 'ID, razão social e CNPJ são obrigatórios.' });
   }
 
-  const dataClienteFinal = data_cliente && data_cliente.trim() !== '' ? data_cliente : null; // 👈 Agora no lugar certo
+  const dataClienteFinal = data_cliente && data_cliente.trim() !== '' ? data_cliente : null;
+  const dataVencimentoFinal = data_vencimento && data_vencimento.trim() !== '' ? data_vencimento : null;
 
   const sqlAtualizar = `
     UPDATE razao_social 
@@ -2063,7 +2155,10 @@ app.post('/atualizar-razao-social', (req, res) => {
       nome_b = ?, 
       contato_b = ?, 
       link_b = ?, 
-      observacao = ?
+      observacao = ?,
+      dia_vencimento = ?,
+      data_vencimento = ?,
+      qt_licenca = ?
     WHERE id = ?
   `;
 
@@ -2072,7 +2167,7 @@ app.post('/atualizar-razao-social', (req, res) => {
     nome_fantasia,
     cnpj,
     cliente,
-    dataClienteFinal, // 👈 Usando agora certo
+    dataClienteFinal,
     nome_a,
     contato_a,
     link_a,
@@ -2080,6 +2175,9 @@ app.post('/atualizar-razao-social', (req, res) => {
     contato_b,
     link_b,
     observacao,
+    dia_vencimento,
+    dataVencimentoFinal, // ✅ Corrigido aqui
+    qt_licenca,
     id
   ], (err, resultado) => {
     if (err) {
@@ -2094,6 +2192,7 @@ app.post('/atualizar-razao-social', (req, res) => {
     res.status(200).json({ mensagem: 'Atualização realizada com sucesso!' });
   });
 });
+
 
 
 // rota pesquisar razao social ou cnpj

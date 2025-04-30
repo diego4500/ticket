@@ -87,8 +87,9 @@ function abrirModalChurn(dadosEmpresa) {
             <div style="margin-bottom: 12px;"><strong style="color: #2C34C9;">Nome Fantasia:</strong> <span id="infoFantasia">${info.nome_fantasia || "-"}</span></div>
             <div style="margin-bottom: 12px;"><strong style="color: #2C34C9;">CNPJ:</strong> <span id="infoCNPJ">${info.cnpj}</span></div>
             <div style="margin-bottom: 12px;"><strong style="color: #2C34C9;">Data Cliente:</strong> <span id="infoCliente">${dataClienteBR}</span></div>
-            <div style="margin-bottom: 20px;"><strong style="color: #2C34C9;">Data Último Churn:</strong> 
+            <div style="margin-bottom: 20px;"><strong style="color: #2C34C9;">Data Último Churn:</strong>             
             <input type="date" id="dataApresentacao" value="${dataUltimoChurnISO}" style="padding: 5px; font-size: 14px; margin-top: 4px; width: 150px; margin-left: 5px;">
+            <span id="atualizar" ><strong>&#x21BB;</strong></span>
            
   
             <div style="margin-bottom: 10px;"><strong>Histórico de Churns:</strong></div>
@@ -130,11 +131,38 @@ function abrirModalChurn(dadosEmpresa) {
         `;
   
         conteudo.innerHTML = html;
+        document.getElementById("atualizar").addEventListener("click", () => {
+          const dataChurnInput = document.getElementById("dataApresentacao").value;
+          const razao = document.getElementById("infoRazao").textContent.trim();
+        
+          fetch("/atualizar-churn", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              razao_social: razao,
+              data_churn: dataChurnInput
+            })
+          })
+            .then(res => res.json())
+            .then(resposta => {
+              if (!resposta.sucesso) {
+                alert("❌ Erro ao salvar a nova data do churn.");
+                return;
+              }
+        
+              // Reabre o modal com os dados atualizados
+              abrirModalChurn({ razao_social: razao });
+            })
+            .catch(() => alert("❌ Erro ao comunicar com o servidor."));
+        });
+        
         modal.style.display = "flex";
   
         document.getElementById("fecharBotao").addEventListener("click", () => {
+          
           window.location.reload();
-          modal.style.display = "none";
         });
   
         // Aguarda o DOM ser renderizado para associar os eventos
@@ -204,12 +232,14 @@ ${marcados || "- Nenhum selecionado -"}`;
                     botaoCopiar.textContent = "Copiado!";
                     botaoCopiar.style.backgroundColor = "#28a745";
                     botaoCopiar.style.color = "#fff";
+                    
           
                     setTimeout(() => {
                       botaoCopiar.textContent = "Copiar";
                       botaoCopiar.style.backgroundColor = "";
                       botaoCopiar.style.color = "";
-                    }, 2000);
+                     
+                    }, 900);
                   })
                   .catch(err => alert("❌ Erro ao copiar os dados."));
               })

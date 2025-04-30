@@ -108,8 +108,7 @@ function abrirModalAtualizarRazaoSocial() {
 
   // Fechar modal
   document.getElementById("fecharBotao").addEventListener("click", () => {
-    modal.style.display = "none";
-    
+    window.location.reload();       
   });
 
   // ⬇️ Adiciona o submit ao formulário dinamicamente
@@ -326,6 +325,7 @@ function abrirModalFuncionalidadeComCheckbox(razaoSocial) {
         <div class="flex-esquerda" style="margin-bottom: 20px;">
           <label for="dataApresentacao" style="color: #2C34C9; font-weight: bold; margin: 0px !important; font-size: 15px;">Data Apresentação:</label>
           <input type="date" id="dataApresentacao" value="${dataApresentacaoInput}" style="padding: 5px; font-size: 14px; margin-top: 4px; width: 150px; margin-left: 5px;">
+          <span id="atualizar" ><strong>&#x21BB;</strong></span>
         </div>
 
         <div style="margin-bottom: 10px;"><strong>Histórico de Funcionalidades:</strong></div>
@@ -368,11 +368,43 @@ function abrirModalFuncionalidadeComCheckbox(razaoSocial) {
     `;
 
       conteudo.innerHTML = html;
+      document.getElementById("atualizar").addEventListener("click", async () => {
+        const observacoes = document.getElementById("observacoes").value.trim();
+        const dataApresentacao = document.getElementById("dataApresentacao").value;
+        const dataCadastro = document.getElementById("dataCadastro").value;
+      
+        const payload = {
+          razao_social: dadosEmpresa.razao_social,
+          observacao: observacoes,
+          data_apresentacao: dataApresentacao,
+          data_cadastro: dataCadastro
+        };
+      
+        try {
+          const resposta = await fetch("/salvar-observacao", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+      
+          const resultado = await resposta.json();
+      
+          if (resultado.sucesso) {
+            // Reabre o modal com os dados atualizados
+            abrirModalFuncionalidadeComCheckbox(dadosEmpresa.razao_social);
+          } else {
+            alert("❌ Erro ao salvar a observação.");
+          }
+        } catch (erro) {
+          console.error("Erro na atualização:", erro);
+          alert("❌ Erro ao conectar com o servidor.");
+        }
+      });
+      
       modal.style.display = "flex";
 
       document.getElementById("fecharBotao").addEventListener("click", () => {
-        modal.style.display = "none";
-        location.reload();
+        window.location.reload();  
       });
 
       setTimeout(() => {
@@ -446,7 +478,7 @@ ${observacoes || "-"}`;
                 .then(res => res.json())
                 .then(res => {
                   if (res.sucesso) {
-                    abrirModalFuncionalidadeComCheckbox(dadosEmpresa.razao_social);
+                    
 
                     const botaoCopiar = document.getElementById("copiarFuncionalidades");
                     botaoCopiar.textContent = "Copiado e salvo!";
@@ -457,7 +489,9 @@ ${observacoes || "-"}`;
                       botaoCopiar.textContent = "Copiar e Salvar";
                       botaoCopiar.style.backgroundColor = "";
                       botaoCopiar.style.color = "";
-                    }, 2000);
+                      abrirModalFuncionalidadeComCheckbox(dadosEmpresa.razao_social);
+                      
+                    }, 900);
                   } else {
                     alert("⚠️ Copiado, mas houve erro ao salvar a observação.");
                   }

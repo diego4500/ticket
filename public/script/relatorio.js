@@ -12,8 +12,8 @@ let statusFiltro = null;
 let ticketAtual = null;
 
 const colunas = [
-  "ticket", "atendente", "razao_social", "tipo", "titulo", "cliente", "status", "data_abertura", "data_fechamento", "chamado"
-];
+  "ticket", "atendente", "razao_social", "tipo", "titulo", "cliente", "status", "data_abertura", "data_fechamento", "chamado"];
+
 
 
 

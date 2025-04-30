@@ -154,6 +154,7 @@ document.getElementById('cadastrar_razao').addEventListener('click', function ()
           </div>
           
         </div>
+        
 
         <div class="campo" style="flex: 1 1 100%;">
           <label>Observação:</label>

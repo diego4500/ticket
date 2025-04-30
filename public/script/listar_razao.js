@@ -2,7 +2,9 @@ let paginaAtual = 1;
 const limite = 20;
 atualizarContadorClientes(); 
 
-
+document.getElementById('botaoOrdenar').addEventListener('click', () => {
+  carregarTabelaRazoesSociais(true); // reseta e recarrega
+});
 
 document.addEventListener('DOMContentLoaded', () => {
   carregarTabelaRazoesSociais(true); // ✅ chama com reset = true
@@ -12,19 +14,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function carregarTabelaRazoesSociais(reset = false) {
   const containerCarregar = document.getElementById('container-carregar');
-const botaoCarregarMais = document.getElementById('botaoCarregarMais');
+  const botaoCarregarMais = document.getElementById('botaoCarregarMais');
   const divRelatorio = document.getElementById('clientes_relatorio');
-  const filtroSelecionado = document.getElementById('filtroCliente').value; // <-- Novo
-  
+  const filtroSelecionado = document.getElementById('filtroCliente').value; // ✅ primeiro o filtro
+
+  const ordenarPor = document.getElementById('ordenarPor')?.value || 'razao_social';
+  const direcao = document.getElementById('direcao')?.value || 'ASC';
 
   if (reset) {
     paginaAtual = 1;
     divRelatorio.innerHTML = '';
-    containerCarregar.style.display = 'none'; // ✅ AQUI sim, correto!
+    containerCarregar.style.display = 'none';
   }
 
   try {
-    const dados = await buscarRazoesSociais(paginaAtual, limite, filtroSelecionado);
+    const dados = await buscarRazoesSociais(paginaAtual, limite, filtroSelecionado, ordenarPor, direcao);
 
     if (dados.length === limite) {
       botaoCarregarMais.style.display = 'block'; // 🔥 Se trouxe 20 registros, permite carregar mais
@@ -43,13 +47,17 @@ const botaoCarregarMais = document.getElementById('botaoCarregarMais');
       tabela.style.marginTop = '20px';
 
       tabela.innerHTML = `
-        <thead style="background-color: #2C34C9; color: white;">
+      
+       <thead style="background-color: #2C34C9; color: white;">
           <tr>
             <th style="padding: 10px;">Razão Social</th>
             <th style="padding: 10px;">Nome Fantasia</th>
             <th style="padding: 10px;">CNPJ</th>
             <th style="padding: 10px;">Cliente</th>
             <th style="padding: 10px;">Data Cliente</th>
+            <th style="padding: 10px;">Vence em:</th>
+            <th style="padding: 10px;">Dias Sem Acesso</th>
+            <th style="padding: 10px;">Faturamento</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -67,13 +75,36 @@ const botaoCarregarMais = document.getElementById('botaoCarregarMais');
       linha.style.borderBottom = '1px solid #eee';
       linha.style.cursor = 'pointer';
 
-      linha.innerHTML = `
-      <td style="padding: 10px; max-width: 400px !important; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap;">${item.razao_social}</td>
-      <td style="padding: 10px;">${item.nome_fantasia || '-'}</td>
-      <td style="text-align: center; padding: 10px;">${formatarCNPJ(item.cnpj)}</td>
-      <td style="text-align: center; padding: 10px;">${item.cliente == 1 ? '✅' : '❌'}</td>
-      <td style="text-align: center; padding: 10px;">${item.data_cliente || '-'}</td>
-    `;
+      const hoje = new Date().toISOString().split("T")[0]; // '2025-04-29'
+      const vencimento = item.data_vencimento;
+if (item.cliente == 1 && vencimento < hoje) {
+        linha.innerHTML = `
+        <td style=" background:rgb(252, 219, 219); padding: 10px; max-width: 400px !important; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap;">${item.razao_social}</td>
+        <td style="background:rgb(252, 219, 219); padding: 10px;">${item.nome_fantasia || '-'}</td>
+        <td style="background:rgb(252, 219, 219); text-align: center; padding: 10px;">${formatarCNPJ(item.cnpj)}</td>
+        <td style="background:rgb(252, 219, 219); text-align: center; padding: 10px;">${item.cliente == 1 ? '✅' : '❌'}</td>
+        <td style="background:rgb(252, 219, 219); text-align: center; padding: 10px;">${item.data_cliente || '-'}</td>
+        <td style="background:rgb(252, 219, 219); text-align: center; padding: 10px;">${item.data_vencimento || '-'}</td>
+        <td style="background:rgb(252, 219, 219); text-align: center; padding: 10px;">${item.sem_acesso || '-'}</td>
+        <td style="background:rgb(252, 219, 219); text-align: center; padding: 10px;">${item.faturamento || '-'}</td>
+      `;
+
+      }
+      else{
+        linha.innerHTML = `
+        <td style="padding: 10px; max-width: 400px !important; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap;">${item.razao_social}</td>
+        <td style="padding: 10px;">${item.nome_fantasia || '-'}</td>
+        <td style="text-align: center; padding: 10px;">${formatarCNPJ(item.cnpj)}</td>
+        <td style="text-align: center; padding: 10px;">${item.cliente == 1 ? '✅' : '❌'}</td>
+        <td style="text-align: center; padding: 10px;">${item.data_cliente || '-'}</td>
+        <td style="text-align: center; padding: 10px;">${item.data_vencimento || '-'}</td>
+        <td style="text-align: center; padding: 10px;">${item.sem_acesso || '-'}</td>
+          <td style="text-align: center; padding: 10px;">${item.faturamento || '-'}</td>
+      `;
+
+      }
+
+   
     
 
       linha.addEventListener('click', () => {
@@ -97,9 +128,9 @@ const botaoCarregarMais = document.getElementById('botaoCarregarMais');
 }
 
 
-async function buscarRazoesSociais(pagina = 1, limite = 20, filtro = 'todos') {
+async function buscarRazoesSociais(pagina = 1, limite = 20, filtro = 'todos', ordenarPor = 'razao_social', direcao = 'ASC') {
   try {
-    const resposta = await fetch(`/listar-razao-social?pagina=${pagina}&limite=${limite}&filtro=${filtro}`);
+    const resposta = await fetch(`/listar-razao-social?pagina=${pagina}&limite=${limite}&filtro=${filtro}&ordenarPor=${ordenarPor}&direcao=${direcao}`);
     if (!resposta.ok) throw new Error('Erro ao buscar razões sociais.');
     return await resposta.json();
   } catch (error) {
@@ -107,6 +138,7 @@ async function buscarRazoesSociais(pagina = 1, limite = 20, filtro = 'todos') {
     return [];
   }
 }
+
 
 
 function formatarCNPJ(cnpj) {
@@ -250,6 +282,31 @@ if (botaoCarregarMais) {
             <button class="chatA" id="chatB">Contato Chat</button>
           </div>
             </div>
+
+          <div id="div_cliente">
+            <div>
+                 <h2>Informações de Cobrança do cliente</h2>
+            <div class="flexModal" >           
+            
+              <div class="campo">
+                <label>Dia de vencimento:</label>
+                <input type="number" id="dia" min="1" max="31" step="1" style="width: 45px; font-size: 25px; margin-left: 20px;">
+
+
+              </div>
+              <div class="campo">
+                <label>Vence em:</label>
+                <input type="date" id="vencimento" >
+              </div>
+              <div class="campo">
+                <label>Quantidade de licença:</label>
+                <input type="number" id="qt_licenca" min="1" max="31" step="1" style="width: 45px; font-size: 25px; margin-left: 20px;">
+              </div>
+            </div>
+            </div>
+          </div>
+
+
             <div class="campo" style="flex: 1 1 100%;">
               <label>Observação:</label>
               <textarea id="observacao" class="observacaoRazao">${dados.observacao || ''}</textarea>
@@ -263,6 +320,26 @@ if (botaoCarregarMais) {
           </form>
         </div>
       `;
+
+      // Mostrar ou ocultar a div de cobrança com base no valor de cliente
+const divCliente = document.getElementById('div_cliente');
+const checkboxCliente = document.getElementById('clienteB');
+document.getElementById('dia').value = dados.dia_vencimento || '';
+document.getElementById('vencimento').value = dados.data_vencimento || '';
+document.getElementById('qt_licenca').value = dados.qt_licenca || '';
+
+
+checkboxCliente.addEventListener('change', () => {
+  divCliente.style.display = checkboxCliente.checked ? 'flex' : 'none';
+});
+
+
+if (checkboxCliente.checked) {
+  divCliente.style.display = 'flex';
+} else {
+  divCliente.style.display = 'none';
+}
+
 
       if (dados.cliente == 1) {
         document.getElementById('clienteB').disabled = true;
@@ -316,7 +393,10 @@ if (botaoCarregarMais) {
             nome_b: document.getElementById('nomeB').value.trim(),
             contato_b: document.getElementById('numeroB').value.trim(),
             link_b: document.getElementById('linkB').value.trim(),
-            observacao: document.getElementById('observacao').value.trim()
+            observacao: document.getElementById('observacao').value.trim(),
+            dia_vencimento: document.getElementById('dia').value,
+            data_vencimento: document.getElementById('vencimento').value,
+            qt_licenca: document.getElementById('qt_licenca').value
           };
           
           try {
@@ -441,6 +521,7 @@ async function buscarRazaoSocialOuCNPJ(reset = false) {
             <th style="padding: 10px;">CNPJ</th>
             <th style="padding: 10px;">Cliente</th>
             <th style="padding: 10px;">Data Cliente</th>
+            <th style="padding: 10px;">Vence em:</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -464,6 +545,7 @@ async function buscarRazaoSocialOuCNPJ(reset = false) {
         <td style="text-align: center; padding: 10px;">${formatarCNPJ(item.cnpj)}</td>
         <td style="text-align: center; padding: 10px;">${item.cliente == 1 ? '✅' : '❌'}</td>
         <td style="text-align: center; padding: 10px;">${item.data_cliente || '-'}</td>
+        <td style="text-align: center; padding: 10px;">${item.data_vencimento || '-'}</td>
       `;
 
       linha.addEventListener('click', () => {
