@@ -302,10 +302,14 @@ function abrirModalFuncionalidadeComCheckbox(razaoSocial) {
       : "";
 
     const textoObservacao = dadosEmpresa.observacao || "";
+    const cnpjC = formatarCNPJ(dadosEmpresa.cnpj);
+      
 
     // 🔵 Buscar funcionalidades já filtradas pela nova rota
     const lista = await fetch(`/funcionalidades-por-cnpj-data-apresentacao?cnpj=${encodeURIComponent(dadosEmpresa.cnpj)}`)
       .then(res => res.json());
+
+      
 
     let html = `
       <div style="background-color: #2C34C9; color: white; padding: 12px; font-weight: bold; font-size: 20px; border-radius: 6px 6px 0 0;">
@@ -314,7 +318,7 @@ function abrirModalFuncionalidadeComCheckbox(razaoSocial) {
       <div style="padding: 20px;">
         <div style="margin-bottom: 12px;"><strong style="color: #2C34C9;">Razão Social:</strong> <span>${dadosEmpresa.razao_social}</span></div>
         <div style="margin-bottom: 12px;"><strong style="color: #2C34C9;">Nome Fantasia:</strong> <span>${dadosEmpresa.nome_fantasia || "-"}</span></div>
-        <div style="margin-bottom: 12px;"><strong style="color: #2C34C9;">CNPJ:</strong> <span>${dadosEmpresa.cnpj}</span></div>
+        <div style="margin-bottom: 12px;"><strong style="color: #2C34C9;">CNPJ:</strong> <span>${cnpjC}</span></div>
         <div style="margin-bottom: 12px;"><strong style="color: #2C34C9;">Data Cadastro:</strong> 
         <input type="date" id="dataCadastro" value="${dataCadastroBR}" style="padding: 5px; font-size: 14px; margin-top: 4px; width: 150px; margin-left: 5px;">
         </div>
