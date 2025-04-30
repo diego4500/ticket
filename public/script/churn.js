@@ -105,16 +105,18 @@ function abrirModalChurn(dadosEmpresa) {
               <tbody>
         `;
   
-        lista.forEach(item => {
+        lista.filter(item => item.churn && item.churn.trim() !== "")
+        .forEach(item => {
           html += `
             <tr>
               <td style="text-align: center; padding: 8px;">
                 <input type="checkbox" class="checkbox-churn" value="${item.churn}" checked>
               </td>
-              <td style="padding: 8px;">${item.churn || "-"}</td>
+              <td style="padding: 8px;">${item.churn}</td>
             </tr>
           `;
         });
+      
   
         html += `
               </tbody>
