@@ -218,11 +218,11 @@ app.get('/apresentacao', autenticado, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'apresentacao.html'));
 });
 
-app.get('/razao_social', (req, res) => {
+app.get('/razao_social', autenticado, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'razao_social.html'));
 });
 
-app.get('/importar', (req, res) => {
+app.get('/importar', autenticado, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'importar_razao.html'));
 });
 
@@ -2022,7 +2022,7 @@ app.post('/importar_grafana', upload.single('arquivo'), (req, res) => {
 
 app.get('/listar-razao-social', (req, res) => {
   let pagina = parseInt(req.query.pagina) || 1;
-  let limite = parseInt(req.query.limite) || 20;
+  let limite = parseInt(req.query.limite) || 50;
   let offset = (pagina - 1) * limite;
   let filtro = req.query.filtro || 'todos';
 

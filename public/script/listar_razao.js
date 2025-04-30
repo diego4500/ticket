@@ -1,5 +1,5 @@
 let paginaAtual = 1;
-const limite = 20;
+const limite = 50;
 atualizarContadorClientes(); 
 
 document.getElementById('botaoOrdenar').addEventListener('click', () => {
