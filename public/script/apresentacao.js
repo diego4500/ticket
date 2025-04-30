@@ -340,18 +340,16 @@ function abrirModalFuncionalidadeComCheckbox(razaoSocial) {
           <tbody>
     `;
 
-    lista.filter(item => item.churn && item.churn.trim() !== "")
-    .forEach(item => {
+    lista.forEach(item => {
       html += `
         <tr>
           <td style="text-align: center; padding: 8px;">
-            <input type="checkbox" class="checkbox-churn" value="${item.churn}" checked>
+            <input type="checkbox" class="checkbox-func" value="${item.funcionalidade}" data-tipo="${item.tipo}" checked>
           </td>
-          <td style="padding: 8px;">${item.churn}</td>
+          <td style="padding: 8px;">${item.funcionalidade || "-"}</td>
         </tr>
       `;
     });
-  
 
       html += `
           </tbody>
