@@ -36,7 +36,8 @@ function razaoSocialSugestoes(razao) {
             .then(res => res.json())
             .then(dados => {
               document.getElementById('nome_fantasia').value = dados.nome_fantasia || '';
-              document.getElementById('cnpjB').value = dados.cnpj || '';
+              
+              document.getElementById('cnpjB').value = formatarCNPJ(dados.cnpj || '');
             })
             .catch(err => console.error("Erro ao buscar dados:", err));
 
@@ -148,6 +149,7 @@ function abrirModalAtualizarRazaoSocial() {
                   } else {
                     alert(`Foram inseridas ${resposta.total} novas razões sociais:\n\n- ${resposta.inseridos.join("\n- ")}`);
                     modal.style.display = "none";
+                    
                   }
                 } else {
                   alert("Erro ao importar os dados para o banco.");
@@ -208,6 +210,7 @@ document.getElementById("formAlterar").addEventListener("submit", async function
     if (resultado.sucesso) {
       alert(resultado.mensagem);
       document.getElementById("formAlterar").reset();
+      window.location.reload();
     } else {
       alert("❌ " + resultado.mensagem);
     }
@@ -531,4 +534,11 @@ document.getElementById("dataApresentacao").addEventListener("change", function 
   abrirModalFuncionalidadeComCheckbox(dadosEmpresa.razao_social);
 });
 
-
+function formatarCNPJ(cnpj) {
+  return cnpj
+    .replace(/\D/g, '') // remove tudo que não for dígito
+    .replace(/^(\d{2})(\d)/, '$1.$2')
+    .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+    .replace(/\.(\d{3})(\d)/, '.$1/$2')
+    .replace(/(\d{4})(\d)/, '$1-$2');
+}
