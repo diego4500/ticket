@@ -15,6 +15,49 @@
 
   <div class="main-content">
     <div class="centro">
+      <div>
+
+      <!-- Cadastrar Churn  Inicio -->
+      <div class="container">
+        <h1 class="tituloH">Cadastro Churn</h1>
+        <form id="formAlterar" class="form-flex">
+          <div class="flexD">
+              <div class="alterarCliente">
+                  <label for="tenant">Razão Social:</label>
+                  <input type="text" id="tenant" required autocomplete="off" placeholder="Digite a razão social*" required />
+              </div>
+              <div>
+                  <label for="arquivo">Nome Fantasia:</label>
+                  <div class="sugestoes-container">
+                      <input type="text" id="nome_fantasia"  autocomplete="off" placeholder="Digite o nome fantasia" 
+                          autocomplete="off" />
+                      <div id="sugestoesB" class="sugestoes-lista"></div>
+                  </div>
+              </div>
+              <div class="cnpj-c">
+                <label for="cnpj">CNPJ:</label>
+                <input type="text" id="cnpjB" disabled autocomplete="off">
+            </div>
+       
+            <div class="date">
+              <label for="date">Data do Churn: </label>
+              <input type="date" id="dataCliente">
+            </div>
+              
+
+          </div>
+          <div class="flexG">    
+            <p class="grafana" id="botaoAtualizarRazao" style="cursor: pointer;">Atualizar Razão Social</p>     
+              <button class="alterar" type="submit">Cadastrar</button>
+              
+          </div>
+      </form>
+      </div>
+
+      <!-- Cadastrar Churn  Fim -->
+
+
+
       <div class="container">
         <h1 class="tituloH">Churn</h1>
         <div id="clientes_relatorio">
@@ -22,6 +65,7 @@
         </div>
       </div>
     </div>
+  </div>
   </div>
 
   <!-- ✅ Modal de Exibição -->

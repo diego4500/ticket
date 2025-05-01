@@ -202,7 +202,7 @@ app.get('/cadastrar', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'cadastrar.html'));
 });
 
-app.get('/churn', autenticado, (req, res) => {
+app.get('/churn', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'churn.html'));
 });
 
@@ -1574,30 +1574,62 @@ app.get("/sugestoes-churn", (req, res) => {
 // rota cadastrar churn
 
 app.post("/cadastrar-churn", (req, res) => {
-  let { motivo, usuario } = req.body;
+  const { razao_social, nome_fantasia, cnpj, data_churn } = req.body;
 
-  if (!motivo || !usuario) {
-    return res.status(400).json({ sucesso: false, mensagem: "Campos obrigatórios ausentes." });
+  if (!cnpj || !razao_social || !data_churn) {
+    console.warn("⚠️ Dados incompletos recebidos:", req.body);
+    return res.status(400).json({ sucesso: false, mensagem: "Dados incompletos." });
   }
 
-  motivo = motivo.toLowerCase();
+  const cnpjLimpo = cnpj.replace(/\D/g, '');
+  console.log("🔍 CNPJ limpo recebido:", cnpjLimpo);
 
-  const sql = `
-    INSERT INTO churn_titulo (motivo, usuario, data_hora)
-
-    VALUES (?, ?, NOW())
+  const buscarDataCliente = `
+    SELECT data_cliente 
+    FROM razao_social 
+    WHERE REPLACE(REPLACE(REPLACE(REPLACE(cnpj, '.', ''), '-', ''), '/', ''), ' ', '') = ? 
+    LIMIT 1
   `;
 
-  db.query(sql, [motivo, usuario], (err) => {
+  db.query(buscarDataCliente, [cnpjLimpo], (err, resultado) => {
     if (err) {
-      console.error("Erro ao cadastrar motivo:", err);
-      return res.status(500).json({ sucesso: false, mensagem: "Erro ao salvar no banco." });
+      console.error("❌ Erro ao buscar data_cliente:", err);
+      return res.status(500).json({ sucesso: false, mensagem: "Erro ao buscar data_cliente." });
     }
 
-    res.json({ sucesso: true });
+    console.log("📄 Resultado da busca por data_cliente:", resultado);
+
+    const data_cliente = resultado.length > 0 ? resultado[0].data_cliente : null;
+
+    if (!data_cliente) {
+      console.warn("⚠️ Nenhuma data_cliente encontrada para o CNPJ:", cnpjLimpo);
+    } else {
+      console.log("✅ data_cliente encontrada:", data_cliente);
+    }
+
+    const inserirChurn = `
+      INSERT INTO churn (razao_social, nome_fantasia, cnpj, data_churn, data_cliente)
+      VALUES (?, ?, ?, ?, ?)
+    `;
+
+    db.query(
+      inserirChurn,
+      [razao_social, nome_fantasia, cnpjLimpo, data_churn, data_cliente],
+      (err2) => {
+        if (err2) {
+          console.error("❌ Erro ao inserir churn:", err2);
+          return res.status(500).json({ sucesso: false, mensagem: "Erro ao salvar churn." });
+        }
+
+        console.log("✅ Churn salvo com sucesso!");
+        res.json({ sucesso: true });
+      }
+    );
   });
 });
 
+
+/*/
 // Salvar churn na tabela churn
 
 app.post("/salvar-churn", async (req, res) => {
@@ -1609,9 +1641,13 @@ app.post("/salvar-churn", async (req, res) => {
     WHERE razao_social = ? AND data_churn = ?
   `;
 
-  const buscarDataClienteSQL = `
-    SELECT data_cliente FROM razao_social WHERE razao_social = ?
-  `;
+  const buscarDataCliente = `
+  SELECT data_cliente 
+  FROM razao_social 
+  WHERE REPLACE(REPLACE(REPLACE(REPLACE(cnpj, '.', ''), '-', ''), '/', ''), ' ', '') = ? 
+  LIMIT 1
+`;
+
 
   const inserirSQL = `
     INSERT INTO churn (razao_social, nome_fantasia, cnpj, data_cliente, data_churn)
@@ -1640,8 +1676,9 @@ app.post("/salvar-churn", async (req, res) => {
   }
 });
 
+*/
 
-
+/*
 // buscar os churns
 
 app.get("/churns", (req, res) => {
@@ -1666,7 +1703,11 @@ app.get("/churns", (req, res) => {
   });
 });
 
+*/
+
 // modal churn
+
+/*
 
 app.get("/churns-por-razao", (req, res) => {
   const razao = req.query.razao;
@@ -1698,6 +1739,7 @@ app.get("/churns-por-razao", (req, res) => {
   });
 });
 
+*/
 const fetch = require("node-fetch");
 
 // cadastrar apresentacao
@@ -2436,6 +2478,56 @@ app.post('/atualizar-churn', autenticado, (req, res) => {
     res.json({ sucesso: true });
   });
 });
+
+// listar churn na tabela
+
+app.get("/listar-churns", (req, res) => {
+  const sql = `
+    SELECT id, razao_social, nome_fantasia, cnpj, data_cliente, data_churn
+    FROM churn
+    ORDER BY data_churn DESC
+  `;
+
+  db.query(sql, (err, resultados) => {
+    if (err) {
+      console.error("Erro ao listar churns:", err);
+      return res.status(500).json({ sucesso: false, mensagem: "Erro ao buscar churns." });
+    }
+
+    res.json(resultados);
+  });
+});
+
+app.get('/buscar-churn-por-cnpj-data', (req, res) => {
+  const { cnpj, data_cliente } = req.query;
+
+  if (!cnpj || !data_cliente) {
+    return res.status(400).json({ sucesso: false, mensagem: 'CNPJ ou data faltando.' });
+  }
+
+  const cnpjLimpo = cnpj.replace(/\D/g, '');
+
+  const sql = `
+    SELECT churn
+    FROM tickets
+    WHERE tipo = 'churn'
+      AND REPLACE(REPLACE(REPLACE(cnpj, '.', ''), '-', ''), '/', '') = ?
+      AND DATE(data_abertura) = DATE(?)
+    ORDER BY id DESC
+  `;
+
+  db.query(sql, [cnpjLimpo, data_cliente], (err, resultados) => {
+    if (err) {
+      console.error("Erro ao buscar churn:", err);
+      return res.status(500).json({ sucesso: false, mensagem: "Erro interno." });
+    }
+
+    res.json({ sucesso: true, churns: resultados.map(r => r.churn) });
+  });
+});
+
+
+
 
 
 
