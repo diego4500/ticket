@@ -263,16 +263,17 @@ function carregarChurns() {
         colunas.forEach(col => {
           const celula = linha.insertCell();
           let valor = item[col] || "";
-
+        
           if (col === "cnpj" && valor) {
             valor = formatarCNPJ(valor);
           }
-
+        
           if (col.includes("data") && valor) {
-            const data = new Date(valor);
-            valor = data.toLocaleDateString("pt-BR");
+            // garante dd/mm/aaaa sem fuso
+            const [yyyy, mm, dd] = valor.split("T")[0].split("-");
+            valor = `${dd}/${mm}/${yyyy}`;
           }
-
+        
           celula.textContent = valor;
         });
       });
