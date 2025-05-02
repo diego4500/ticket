@@ -286,6 +286,9 @@ function carregarChurns() {
             val = `${d}/${m}/${y}`;
           }
           td.textContent = val;
+          if (c.key === "razao_social") {
+            td.classList.add("razao-social");   // ⬅️ aplica a regra de truncar
+          }
         });
       });
 

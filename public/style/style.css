@@ -80,6 +80,13 @@ body {
     margin-right: 36px;
 }
 
+.tabela-relatorio td.razao-social {
+  max-width: 420px;        /* ajuste como preferir */
+  white-space: nowrap;     /* não deixa quebrar linha */
+  overflow: hidden;        /* esconde o excedente */
+  text-overflow: ellipsis; /* mostra “…” no final */
+}
+
 .flexD {
     display: flex;
 
