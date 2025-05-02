@@ -1573,60 +1573,7 @@ app.get("/sugestoes-churn", (req, res) => {
 
 // rota cadastrar churn
 
-app.post("/cadastrar-churn", (req, res) => {
-  const { razao_social, nome_fantasia, cnpj, data_churn } = req.body;
 
-  if (!cnpj || !razao_social || !data_churn) {
-    console.warn("⚠️ Dados incompletos recebidos:", req.body);
-    return res.status(400).json({ sucesso: false, mensagem: "Dados incompletos." });
-  }
-
-  const cnpjLimpo = cnpj.replace(/\D/g, '');
-  console.log("🔍 CNPJ limpo recebido:", cnpjLimpo);
-
-  const buscarDataCliente = `
-    SELECT data_cliente 
-    FROM razao_social 
-    WHERE REPLACE(REPLACE(REPLACE(REPLACE(cnpj, '.', ''), '-', ''), '/', ''), ' ', '') = ? 
-    LIMIT 1
-  `;
-
-  db.query(buscarDataCliente, [cnpjLimpo], (err, resultado) => {
-    if (err) {
-      console.error("❌ Erro ao buscar data_cliente:", err);
-      return res.status(500).json({ sucesso: false, mensagem: "Erro ao buscar data_cliente." });
-    }
-
-    console.log("📄 Resultado da busca por data_cliente:", resultado);
-
-    const data_cliente = resultado.length > 0 ? resultado[0].data_cliente : null;
-
-    if (!data_cliente) {
-      console.warn("⚠️ Nenhuma data_cliente encontrada para o CNPJ:", cnpjLimpo);
-    } else {
-      console.log("✅ data_cliente encontrada:", data_cliente);
-    }
-
-    const inserirChurn = `
-      INSERT INTO churn (razao_social, nome_fantasia, cnpj, data_churn, data_cliente)
-      VALUES (?, ?, ?, ?, ?)
-    `;
-
-    db.query(
-      inserirChurn,
-      [razao_social, nome_fantasia, cnpjLimpo, data_churn, data_cliente],
-      (err2) => {
-        if (err2) {
-          console.error("❌ Erro ao inserir churn:", err2);
-          return res.status(500).json({ sucesso: false, mensagem: "Erro ao salvar churn." });
-        }
-
-        console.log("✅ Churn salvo com sucesso!");
-        res.json({ sucesso: true });
-      }
-    );
-  });
-});
 
 
 /*/
@@ -2155,8 +2102,6 @@ app.get('/dados-completos-razao-social', (req, res) => {
 // editar dados razao social
 
 app.post('/atualizar-razao-social', (req, res) => {
-  
-
   const {
     id,
     razao_social,
@@ -2180,8 +2125,12 @@ app.post('/atualizar-razao-social', (req, res) => {
     return res.status(400).json({ erro: 'ID, razão social e CNPJ são obrigatórios.' });
   }
 
+  // Conversões seguras para NULL se vazios
   const dataClienteFinal = data_cliente && data_cliente.trim() !== '' ? data_cliente : null;
   const dataVencimentoFinal = data_vencimento && data_vencimento.trim() !== '' ? data_vencimento : null;
+
+  const diaFinal = dia_vencimento !== '' && dia_vencimento !== null ? parseInt(dia_vencimento, 10) : null;
+  const licencaFinal = qt_licenca !== '' && qt_licenca !== null ? parseInt(qt_licenca, 10) : null;
 
   const sqlAtualizar = `
     UPDATE razao_social 
@@ -2217,9 +2166,9 @@ app.post('/atualizar-razao-social', (req, res) => {
     contato_b,
     link_b,
     observacao,
-    dia_vencimento,
-    dataVencimentoFinal, // ✅ Corrigido aqui
-    qt_licenca,
+    diaFinal,
+    dataVencimentoFinal,
+    licencaFinal,
     id
   ], (err, resultado) => {
     if (err) {
@@ -2234,6 +2183,7 @@ app.post('/atualizar-razao-social', (req, res) => {
     res.status(200).json({ mensagem: 'Atualização realizada com sucesso!' });
   });
 });
+
 
 
 
@@ -2530,6 +2480,49 @@ app.get('/buscar-churn-por-cnpj-data', (req, res) => {
   });
 });
 
+app.post("/cadastrar-churn", (req, res) => {
+  const { razao_social, nome_fantasia, cnpj, data_churn } = req.body;
+  if (!cnpj || !razao_social || !data_churn) {
+    return res.status(400).json({ sucesso:false, mensagem:"Dados incompletos." });
+  }
+
+  const cnpjLimpo = cnpj.replace(/\D/g, '');
+
+  /* 1.‑ busca data_cliente -------------------------------------------------- */
+  const sqlBusca = `
+      SELECT data_cliente
+        FROM razao_social
+       WHERE REPLACE(REPLACE(REPLACE(REPLACE(cnpj,'.',''),'-',''),'/',''),' ','') = ?
+       LIMIT 1`;
+  db.query(sqlBusca, [cnpjLimpo], (err, rows) => {
+    if (err) return res.status(500).json({sucesso:false,mensagem:"Erro ao buscar data_cliente."});
+
+    const data_cliente = rows.length ? rows[0].data_cliente : null;
+
+    /* 2.‑ insere o churn ---------------------------------------------------- */
+    const sqlInsert = `
+        INSERT INTO churn (razao_social, nome_fantasia, cnpj, data_churn, data_cliente)
+        VALUES (?,?,?,?,?)`;
+    db.query(sqlInsert,
+      [razao_social, nome_fantasia, cnpjLimpo, data_churn, data_cliente],
+      (err2) => {
+        if (err2) return res.status(500).json({sucesso:false,mensagem:"Erro ao salvar churn."});
+
+        /* 3.‑ marca cliente = 0 na tabela razao_social 🆕 ------------------- */
+        const sqlUpdate = `
+            UPDATE razao_social
+               SET cliente = 0
+             WHERE REPLACE(REPLACE(REPLACE(REPLACE(cnpj,'.',''),'-',''),'/',''),' ','') = ?`;
+        db.query(sqlUpdate, [cnpjLimpo], (err3) => {
+          if (err3) {                    // se falhar, registre mas ainda retorne sucesso do churn
+            console.error("⚠️  Churn salvo, mas não foi possível atualizar 'cliente' na tabela razao_social:", err3);
+          }
+          /* 4.‑ resposta final --------------------------------------------- */
+          res.json({ sucesso:true });
+        });
+      });
+  });
+});
 
 
 
