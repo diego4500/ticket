@@ -41,7 +41,7 @@
        
             <div class="date">
               <label for="date">Data do Churn: </label>
-              <input type="date" id="dataCliente">
+              <input type="date" id="dataCliente" value="">
             </div>
               
 
@@ -61,7 +61,9 @@
       <div class="container">
         <h1 class="tituloH">Churn</h1>
         <div id="clientes_relatorio">
-          <div id="mensagem-relatorio" style="font-size: 16px; color: #777; margin-top: 20px;"></div>
+          <p id="mensagem-carregando" style="display:none">Carregando churns…</p>
+          <div id="mensagem-relatorio" style="font-size:16px;color:#777"></div>
+          <!-- aqui a tabela é injetada -->
         </div>
       </div>
     </div>

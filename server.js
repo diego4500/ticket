@@ -2459,25 +2459,29 @@ app.post("/cadastrar-duvida", (req, res) => {
 
 // salvar churn data
 
-app.post('/atualizar-churn', autenticado, (req, res) => {
-  const { razao_social, data_churn } = req.body;
+// server.js  (ou onde ficam as rotas)
+app.put('/atualizar-data-churn', (req, res) => {
+  const { id, novaData } = req.body;           // id do churn  +  yyyy-mm-dd
 
-  const query = `
-    UPDATE churn 
-    SET data_churn = ?
-    WHERE razao_social = ? 
-    ORDER BY id DESC LIMIT 1
+  if (!id || !novaData) {
+    return res.status(400).json({ sucesso:false, mensagem:'id ou data ausentes' });
+  }
+
+  const sql = `
+    UPDATE churn
+       SET data_churn = ?
+     WHERE id = ?;
   `;
 
-  db.query(query, [data_churn, razao_social], (err, result) => {
+  db.query(sql, [novaData, id], err => {
     if (err) {
-      console.error("Erro ao atualizar churn:", err);
-      return res.status(500).json({ sucesso: false, mensagem: "Erro ao atualizar churn." });
+      console.error('Erro ao atualizar data_churn:', err);
+      return res.status(500).json({ sucesso:false, mensagem:'erro interno' });
     }
-
-    res.json({ sucesso: true });
+    res.json({ sucesso:true });
   });
 });
+
 
 // listar churn na tabela
 
