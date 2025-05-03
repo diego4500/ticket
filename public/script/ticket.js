@@ -891,6 +891,7 @@ function sugestaoFuncionalidade() {
             sugestoesDiv.style.display = "block";
         } else {
             sugestoesDiv.innerHTML = "<div style='padding: 8px;'>Nenhuma sugestão encontrada</div>";
+        }
 
             // 🚀 Aqui o container dos botões
             const containerBotoes = document.createElement("div");
@@ -922,7 +923,7 @@ function sugestaoFuncionalidade() {
             // ⬇️ adiciona o container com o botão
             sugestoesDiv.appendChild(containerBotoes);
             sugestoesDiv.style.display = "block";
-        }
+        
     }
 
     function mostrarSugestoes() {
@@ -988,6 +989,7 @@ function sugestaoFuncionalidade() {
         sugestoesDiv.style.display = "block";
       } else {
         sugestoesDiv.innerHTML = "<div style='padding: 8px;'>Nenhuma sugestão encontrada</div>";
+    }
   
         // Container para os dois botões lado a lado
         const containerBotoes = document.createElement("div");
@@ -1019,29 +1021,30 @@ function sugestaoFuncionalidade() {
   
         // Botão: Cadastrar Motivo
         criarBotaoCadastro("Cadastrar Motivo", containerBotoes, async () => {
-          const novo = input.value.trim();
-          if (novo.length === 0) return;
-  
-          const resposta = await fetch("/cadastrar-churn", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ motivo: novo, usuario: nomeUsuarioLogado })
+            const novo = input.value.trim();
+            if (novo.length === 0) return;
+          
+            const resposta = await fetch("/cadastrar-motivo", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ motivo: novo, usuario: nomeUsuarioLogado })
+            });
+          
+            const resultado = await resposta.json();
+          
+            if (resposta.ok && resultado.sucesso) {
+              alert("✅ Motivo cadastrado com sucesso!");
+              sugestoesDiv.style.display = "none";
+            } else {
+              alert("❌ Erro ao cadastrar motivo.");
+            }
           });
-  
-          const resultado = await resposta.json();
-  
-          if (resposta.ok && resultado.sucesso) {
-            alert("✅ Motivo cadastrado com sucesso!");
-            sugestoesDiv.style.display = "none";
-          } else {
-            alert("❌ Erro ao cadastrar motivo.");
-          }
-        });
+          
   
         // Adiciona os dois botões ao container de sugestões
         sugestoesDiv.appendChild(containerBotoes);
         sugestoesDiv.style.display = "block";
-      }
+      
     }
   
     function mostrarSugestoes() {
@@ -1104,6 +1107,7 @@ function sugestaoFuncionalidade() {
         sugestoesDiv.style.display = "block";
       } else {
         sugestoesDiv.innerHTML = "<div style='padding: 8px;'>Nenhuma sugestão encontrada</div>";
+    }
   
         const containerBotoes = document.createElement("div");
         containerBotoes.classList.add("sugestoes-container-botoes");
@@ -1134,7 +1138,7 @@ function sugestaoFuncionalidade() {
   
         sugestoesDiv.appendChild(containerBotoes);
         sugestoesDiv.style.display = "block";
-      }
+      
     }
   
     function mostrarSugestoes() {
@@ -1176,33 +1180,33 @@ function sugestaoFuncionalidade() {
     let itemSelecionado = false;
   
     function montarSugestoes(resultados) {
-      sugestoesDiv.innerHTML = "";
-  
-      if (resultados.length > 0) {
-        resultados.forEach(item => {
-          const div = document.createElement("div");
-          div.textContent = item.charAt(0).toUpperCase() + item.slice(1);
-  
-          div.addEventListener("click", () => {
-            input.value = item.charAt(0).toUpperCase() + item.slice(1);
-            sugestoesDiv.style.display = "none";
-            itemSelecionado = true;
+        sugestoesDiv.innerHTML = "";
+      
+        if (resultados.length > 0) {
+          resultados.forEach(item => {
+            const div = document.createElement("div");
+            div.textContent = item.charAt(0).toUpperCase() + item.slice(1);
+      
+            div.addEventListener("click", () => {
+              input.value = item.charAt(0).toUpperCase() + item.slice(1);
+              sugestoesDiv.style.display = "none";
+              itemSelecionado = true;
+            });
+      
+            sugestoesDiv.appendChild(div);
           });
-  
-          sugestoesDiv.appendChild(div);
-        });
-  
-        sugestoesDiv.style.display = "block";
-      } else {
-        sugestoesDiv.innerHTML = "<div style='padding: 8px;'>Nenhuma sugestão encontrada</div>";
-  
+        } else {
+          sugestoesDiv.innerHTML = "<div style='padding: 8px;'>Nenhuma sugestão encontrada</div>";
+        }
+      
+        // ✅ Sempre cria o botão
         const containerBotoes = document.createElement("div");
         containerBotoes.classList.add("sugestoes-container-botoes");
-  
+      
         criarBotaoCadastro("Cadastrar Dúvida", containerBotoes, async () => {
           const novaDuvida = input.value.trim();
           if (novaDuvida.length === 0) return;
-  
+      
           const resposta = await fetch("/cadastrar-duvida", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -1211,9 +1215,9 @@ function sugestaoFuncionalidade() {
               usuario: nomeUsuarioLogado
             })
           });
-  
+      
           const resultado = await resposta.json();
-  
+      
           if (resposta.ok && resultado.sucesso) {
             alert("✅ Dúvida cadastrada com sucesso!");
             sugestoesDiv.style.display = "none";
@@ -1221,11 +1225,11 @@ function sugestaoFuncionalidade() {
             alert("❌ Erro ao cadastrar dúvida.");
           }
         });
-  
+      
         sugestoesDiv.appendChild(containerBotoes);
         sugestoesDiv.style.display = "block";
       }
-    }
+      
   
     function mostrarSugestoes() {
       sugestoesDiv.innerHTML = "";

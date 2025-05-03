@@ -2525,6 +2525,28 @@ app.post("/cadastrar-churn", (req, res) => {
   });
 });
 
+// cadastrar dentro de ticke o titulo de churn
+
+app.post("/cadastrar-motivo", (req, res) => {
+  const { motivo, usuario } = req.body;
+
+  if (!motivo || !usuario) {
+    return res.status(400).json({ sucesso: false, mensagem: "Motivo e usuário são obrigatórios." });
+  }
+
+  const sql = `INSERT INTO churn_titulo (motivo, usuario) VALUES (?, ?)`;
+
+  db.query(sql, [motivo, usuario], (err, resultado) => {
+    if (err) {
+      console.error("❌ Erro ao salvar motivo:", err);
+      return res.status(500).json({ sucesso: false, mensagem: "Erro ao salvar motivo." });
+    }
+
+    return res.json({ sucesso: true, id: resultado.insertId });
+  });
+});
+
+
 
 // listar apresentação
 
