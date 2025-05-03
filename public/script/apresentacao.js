@@ -1,15 +1,18 @@
-
 const tenantInput = document.getElementById('tenant');
 const sugestoesB = document.getElementById('sugestoesB');
 let razaoInput = tenantInput;
 let sugestoesDiv = sugestoesB;
 let itemSelecionadoRazao = false;
+let cnpjModalAtual = null;
+
+atualizarContadorApresentacao();
 
 tenantInput.addEventListener('input', () => {
   razaoSocialSugestoes(tenantInput.value);
 });
 
 
+// Carregar sugestões
 
 function razaoSocialSugestoes(razao) {
   sugestoesDiv.innerHTML = '';
@@ -55,31 +58,22 @@ function razaoSocialSugestoes(razao) {
     });
 }
 
+document.addEventListener('click', (event) => {
+  const clicouDentroInput = event.target === tenantInput;
+  const clicouDentroSugestoes = sugestoesDiv.contains(event.target);
 
-// Exibir 3 meses de data
-
-flatpickr.localize(flatpickr.l10ns.pt); // Ativa o idioma pt
-
-flatpickr("#dataCliente", {
-  locale: {
-    ...flatpickr.l10ns.pt,
-    months: {
-      shorthand: flatpickr.l10ns.pt.months.shorthand,
-      longhand: flatpickr.l10ns.pt.months.longhand.map((nome, i) => `${nome} (${i + 1})`)
+  if (!clicouDentroInput && !clicouDentroSugestoes) {
+    if (!itemSelecionadoRazao) {
+      tenantInput.value = '';
+      sugestoesDiv.style.display = 'none';
     }
-  },
-  dateFormat: "d/m/Y",
-  showMonths: 3,
-  maxDate: "today",
-  onOpen: function (selectedDates, dateStr, instance) {
-    const dataAtual = new Date();
-    const mesAnterior = new Date(dataAtual.getFullYear(), dataAtual.getMonth() - 2, 1);
-    instance.jumpToDate(mesAnterior);
   }
 });
 
 
-// modal para atualizar a razão social
+
+// modal para atualizar razao social via planilha
+
 function abrirModalAtualizarRazaoSocial() {
   const modal = document.getElementById("modal");
   const conteudo = document.getElementById("conteudoModal");
@@ -95,7 +89,7 @@ function abrirModalAtualizarRazaoSocial() {
         <div class="flexC">
             <input type="file" id="arquivo" name="arquivo" required />
         </div>
-        <div style="text-align: right; padding: 10px;">
+          <div style="text-align: right; padding: 10px;">
           <button id="fecharBotao" type="button">Fechar</button>
           <button type="submit">Enviar</button>
         </div>
@@ -178,14 +172,31 @@ function abrirModalAtualizarRazaoSocial() {
 }
 
 
-const botao = document.getElementById("botaoAtualizarRazao");
-if (botao) {
-  botao.addEventListener("click", abrirModalAtualizarRazaoSocial);
-} else {
-  console.warn("❌ Botão 'botaoAtualizarRazao' não encontrado no DOM.");
-}
+// Evento para abrir o modal atualizar razao
 
-// salva a apresentacao no banco de dados
+const botao = document.getElementById("botaoAtualizarRazao");
+botao.addEventListener("click", abrirModalAtualizarRazaoSocial);
+
+
+
+// tras a data de hoje
+const campoData = document.getElementById('dataApresentacao');
+
+  setTimeout(() => {
+    
+    const hoje = new Date();
+    const yyyy = hoje.getFullYear();
+    const mm = String(hoje.getMonth() + 1).padStart(2, '0');
+    const dd = String(hoje.getDate()).padStart(2, '0');
+
+    const dataHoje = `${yyyy}-${mm}-${dd}`;
+    
+    if (campoData) campoData.value = dataHoje;
+    else console.warn("⚠️ Campo #dataRD não encontrado");
+  }, 100); // espera 100ms
+
+
+// submit do cadastrar Apresentação
 
 document.getElementById("formAlterar").addEventListener("submit", async function (e) {
   e.preventDefault();
@@ -193,9 +204,10 @@ document.getElementById("formAlterar").addEventListener("submit", async function
   const razao_social = document.getElementById("tenant").value;
   const nome_fantasia = document.getElementById("nome_fantasia").value;
   const cnpj = document.getElementById("cnpjB").value;
-  const data_cliente = document.getElementById("dataCliente").value;
+  const dataRD = document.getElementById("dataRD").value;
+  const data_apresentacao = document.getElementById("dataApresentacao").value;
 
-  const dados = { razao_social, nome_fantasia, cnpj, data_cliente };
+  const dados = { razao_social, nome_fantasia, cnpj, dataRD, data_apresentacao };
 
   try {
     const resposta = await fetch("/cadastrar-apresentacao", {
@@ -207,67 +219,76 @@ document.getElementById("formAlterar").addEventListener("submit", async function
     const resultado = await resposta.json();
 
     if (resultado.sucesso) {
-      alert(resultado.mensagem);
+      alert("Apresentação salvo com sucesso!");
+      location.reload(); 
       document.getElementById("formAlterar").reset();
-      window.location.reload();
     } else {
-      alert("❌ " + resultado.mensagem);
+      alert("Erro: " + resultado.mensagem);
     }
   } catch (erro) {
-    console.error("Erro ao enviar dados:", erro);
-    alert("❌ Erro ao conectar com o servidor.");
+    console.error("Erro ao enviar:", erro);
+    alert("Erro na comunicação com o servidor.");
   }
 });
 
+function carregarApresentacao() {
+  const container  = document.getElementById("clientes_relatorio");
+  const loadingEl  = document.getElementById("mensagem-carregando");
+  const statusEl   = document.getElementById("mensagem-relatorio");
 
-// listar as apresentacoe
+  if (loadingEl) loadingEl.style.display = "block";
+  if (statusEl)  statusEl.textContent = "";
 
-function carregarApresentacoes() {
-  const container = document.getElementById("clientes_relatorio");
-  const mensagem = document.getElementById("mensagem-relatorio");
+  container.innerHTML = "";
 
-  fetch('/apresentacoes')
-    .then(res => res.json())
+  fetch("/listar-apresentacao")
+    .then(r => r.json())
     .then(dados => {
-      mensagem.style.display = "none";
-      const tabelaAntiga = container.querySelector("table");
-      if (tabelaAntiga) tabelaAntiga.remove();
+      if (loadingEl) loadingEl.style.display = "none";
 
-      if (!dados || dados.length === 0) {
-        container.innerHTML = "<p style='margin-top: 20px;'>Nenhuma apresentação cadastrada.</p>";
+      if (!dados || !dados.length) {
+        if (statusEl) statusEl.textContent = "Nenhuma Apresentação cadastrado ainda.";
         return;
       }
-
+      if (statusEl) statusEl.textContent = "";         // limpa mensagens
+      //* ------------- monta a tabela ------------- *
       const tabela = document.createElement("table");
       tabela.classList.add("tabela-relatorio");
 
-      const colunas = ["razao_social", "nome_fantasia", "cnpj", "data_cadastro", "data_apresentacao"];
+      const colunas = [
+        { key:"id",            header:"Id", oculto:true },
+        { key:"razao_social",  header:"Razão Social" },
+        { key:"nome_fantasia", header:"Nome Fantasia" },
+        { key:"cnpj",          header:"CNPJ" },        
+        { key:"data_apresentacao",    header:"Data Apresentacao" }
+      ];
 
-      const cabecalho = tabela.insertRow();
-      colunas.forEach(col => {
+      const cab = tabela.insertRow();
+      colunas.forEach(c => {
         const th = document.createElement("th");
-        th.textContent = col.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
-        cabecalho.appendChild(th);
+        th.textContent = c.header;
+        if (c.oculto) th.style.display = "none";
+        cab.appendChild(th);
       });
 
       dados.forEach(item => {
-        const linha = tabela.insertRow();
-        linha.style.cursor = "pointer";
+        const tr = tabela.insertRow();
+        tr.style.cursor = "pointer";
+        tr.addEventListener("click", () => abrirApresentacao(item));
 
-        linha.addEventListener("click", () => {
-          abrirModalFuncionalidadeComCheckbox(item.razao_social, item);
-        });
+        colunas.forEach(c => {
+          const td = tr.insertCell();
+          if (c.oculto) td.style.display = "none";
 
-        colunas.forEach(col => {
-          const celula = linha.insertCell();
-          let valor = item[col] || "-";
-
-          if (col.includes("data") && valor !== "-") {
-            const dataFormatada = valor.split("T")[0].split("-").reverse().join("/");
-
-            celula.textContent = dataFormatada;
-          } else {
-            celula.textContent = valor;
+          let val = item[c.key] || "";
+          if (c.key === "cnpj" && val)  val = formatarCNPJ(val);
+          if (c.key.includes("data") && val){
+            const [y,m,d] = val.split("T")[0].split("-");
+            val = `${d}/${m}/${y}`;
+          }
+          td.textContent = val;
+          if (c.key === "razao_social") {
+            td.classList.add("razao-social");   // ⬅️ aplica a regra de truncar
           }
         });
       });
@@ -275,302 +296,188 @@ function carregarApresentacoes() {
       container.appendChild(tabela);
     })
     .catch(err => {
-      console.error("Erro ao carregar apresentações:", err);
-      container.innerHTML = "<p style='margin-top: 20px;'>Erro ao carregar apresentações.</p>";
+      console.error("listar-apresentacao falhou:", err);
+      loadingEl.style.display = "none";
+      statusEl.textContent = "Erro ao carregar apresentação.";
     });
 }
 
 
-// modal
+// lista as apresentações da página
+carregarApresentacao();
 
-function abrirModalFuncionalidadeComCheckbox(razaoSocial) {
-  Promise.all([
-    fetch(`/apresentacao-detalhes?razao=${encodeURIComponent(razaoSocial)}`).then(res => res.json())
-  ])
-  .then(async ([dadosEmpresa]) => {
-    const modal = document.getElementById("modal");
-    const conteudo = document.getElementById("conteudoModal");
 
-    const dataCadastroBR = dadosEmpresa.data_cadastro
-    ? dadosEmpresa.data_cadastro.split("T")[0]
-    : "-";
+function abrirApresentacao(dados) {
+  const modal     = document.getElementById("modal");
+  const conteudo  = document.getElementById("conteudoModal");
+  cnpjModalAtual = dados.cnpj;
+
+  // ---------- monta o HTML ---------- 
+  const dataApresentacao = dados.data_apresentacao
+        ? new Date(dados.data_apresentacao).toISOString().split("T")[0]
+        : "";
+
+        const dataRD = formatarDataIsoParaBR(dados.data_cadastro)
+
+
+  conteudo.innerHTML = `
+    <div style="background:#2C34C9;color:#fff;padding:12px;font-weight:bold;font-size:20px;border-radius:6px 6px 0 0;">
+      Detalhes da Apresentação
+    </div>
+    <div style="padding:20px;">
+    <div>
+      <div style="margin-bottom:12px;"><strong style="color:#2C34C9;">Razão Social:</strong> ${dados.razao_social}</div>
+      <div style="margin-bottom:12px;"><strong style="color:#2C34C9;">CNPJ:</strong> ${formatarCNPJ(dados.cnpj)}</div>
+    </div>
+      <div >
+          <strong style="color:#2C34C9;">Data Cadastro RD:</strong>
+        ${dataRD}
+      </div>
+      <div style="margin-bottom:12px; margin-top:12px;">
+       
+        <strong style="color:#2C34C9;">Data Apresentação:</strong>
+        <input type="date" id="data_apresentacao" value="${dataApresentacao}" style="padding:5px;font-size:14px;width:150px;margin-left:5px;">
+        <span id="atualizar" style="cursor:pointer;color:purple;font-weight:bold;">&#x21BB;</span>
+      </div>
+
+      <div style="margin-bottom:10px;"><strong>Funcionalidades levantadas:</strong></div>
+      <table class="tabela-relatorio" style="width:100%;border-collapse:collapse;">
+        <thead style="background:#2C34C9;color:#fff;">
+          <tr>
+            <th style="padding:10px;"><input type="checkbox" id="selecionarTodos" checked></th>
+            <th style="padding:10px;">Descrição</th>
+          </tr>
+        </thead>
+        <tbody id="tabelaChurnBody"></tbody>
+      </table>
+
+       <div style="margin-top: 20px;">
+          <label for="observacoes" style="font-weight: bold; display: block; margin-bottom: 5px;">Observações:</label>
+          <textarea id="observacoes" style="width: 541px; height: 200px; resize: vertical; font-size: 14px; padding: 10px;">${dados.observacao || "-"}</textarea>
+        </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:10px;">
+        <button id="fecharBotao">Fechar</button>
+        <button id="salvarCopiar" type="button">Salvar e Copiar</button>
+      </div>
+    </div>
+  `;
+
+// exibe modal 
+  modal.style.display = "flex";
+
+//carrega a tabela imediatamente 
+
+const dataInicial = document.getElementById("data_apresentacao").value;
+listaTicket(cnpjModalAtual, dataInicial);
+
+//listeners
+  document.getElementById("fecharBotao").addEventListener("click", () => modal.style.display = "none");
+
+  document.getElementById("atualizar").addEventListener("click",()=>{
+     const data = document.getElementById("data_apresentacao").value;
+     listaTicket(cnpjModalAtual, data);
+  });
+
+ 
+ // 1️⃣ – pega o botão que acabou de ser injetado
+const btnCopiar = document.getElementById("salvarCopiar");
+
+// 2️⃣ – ANTES de acrescentar um novo listener,
+  //      remova todos os anteriores que possam ter ficado 
+btnCopiar.replaceWith(btnCopiar.cloneNode(true));   // “zera” listeners
+const btnCopiarLimpo = document.getElementById("salvarCopiar"); // novo nó
+
+// 3️⃣ – agora sim adicione UM ÚNICO listener 
+btnCopiarLimpo.addEventListener("click", async () => {
+
+  // (opcional) salve a data editada – só uma vez 
+  await salvarDadosApresentacao(dados.id);
+
+  // ---------- monta os dados ---------- 
+  const razao       = dados.razao_social;
+  const fantasia    = dados.nome_fantasia || "-";
+  const cnpj        = formatarCNPJ(dados.cnpj);
+  const dataCliente = formatarDataIsoParaBR(dados.dataRD);
+
+  const dataApresentacaoISO = document.getElementById("data_apresentacao").value; // yyyy‑mm‑dd
+  const dataApresentacao  = dataApresentacaoISO.split("-").reverse().join("/");
+
+  // checkboxes marcados 
+  const marcados = [...document.querySelectorAll(
+                      "#tabelaChurnBody input[type='checkbox']:checked")]
+                   .map(chk => chk.closest("tr")
+                                 .querySelector("td:nth-child(2)")
+                                 .textContent.trim());
+
+  const textoFinal = `📝 Resumo da Apresentação 
+
+Razão Social: ${razao}
+Nome Fantasia: ${fantasia}
+CNPJ: ${cnpj}
+Data cadastro RD: ${dataRD}
+Data do Apresentação: ${dataApresentacao}
+
+Motivos marcados:
+${marcados.length ? "✅ " + marcados.join("\n✅ ") : "- Nenhum selecionado -"}
+
+Observação:
+${document.getElementById("observacoes").value || "-"}
+
+`;
+
+
+  try {
+    await navigator.clipboard.writeText(textoFinal);
+    feedbackBotao(btnCopiarLimpo, "Salvo e Copiado!", 2000);
+  } catch (e) {
+    console.error(e);
+    alert("Não foi possível copiar o texto.");
+  }
+});
   
 
-    const dataApresentacaoInput = dadosEmpresa.data_apresentacao 
-      ? dadosEmpresa.data_apresentacao.split("T")[0]
-      : "";
 
-    const textoObservacao = dadosEmpresa.observacao || "";
-    const cnpjC = formatarCNPJ(dadosEmpresa.cnpj);
-      
-
-    // 🔵 Buscar funcionalidades já filtradas pela nova rota
-    const lista = await fetch(`/funcionalidades-por-cnpj-data-apresentacao?cnpj=${encodeURIComponent(dadosEmpresa.cnpj)}`)
-      .then(res => res.json());
-
-      
-
-    let html = `
-      <div style="background-color: #2C34C9; color: white; padding: 12px; font-weight: bold; font-size: 20px; border-radius: 6px 6px 0 0;">
-        Apresentação
-      </div>
-      <div style="padding: 20px;">
-        <div style="margin-bottom: 12px;"><strong style="color: #2C34C9;">Razão Social:</strong> <span>${dadosEmpresa.razao_social}</span></div>
-        <div style="margin-bottom: 12px;"><strong style="color: #2C34C9;">Nome Fantasia:</strong> <span>${dadosEmpresa.nome_fantasia || "-"}</span></div>
-        <div style="margin-bottom: 12px;"><strong style="color: #2C34C9;">CNPJ:</strong> <span>${cnpjC}</span></div>
-        <div style="margin-bottom: 12px;"><strong style="color: #2C34C9;">Data Cadastro:</strong> 
-        <input type="date" id="dataCadastro" value="${dataCadastroBR}" style="padding: 5px; font-size: 14px; margin-top: 4px; width: 150px; margin-left: 5px;">
-        </div>
-
-        <div class="flex-esquerda" style="margin-bottom: 20px;">
-          <label for="dataApresentacao" style="color: #2C34C9; font-weight: bold; margin: 0px !important; font-size: 15px;">Data Apresentação:</label>
-          <input type="date" id="dataApresentacao" value="${dataApresentacaoInput}" style="padding: 5px; font-size: 14px; margin-top: 4px; width: 150px; margin-left: 5px;">
-          <span id="atualizar" ><strong>&#x21BB;</strong></span>
-        </div>
-
-        <div style="margin-bottom: 10px;"><strong>Histórico de Funcionalidades:</strong></div>
-
-        <table class="tabela-relatorio" style="width: 100%; border-collapse: collapse;">
-          <thead style="background-color: #2C34C9; color: white;">
-            <tr>
-              <th style="padding: 10px;"><input type="checkbox" id="selecionarTodosFunc" checked></th>
-              <th style="padding: 10px;">Marcar / Desmarcar - Todos</th>
-            </tr>
-          </thead>
-          <tbody>
-    `;
-
-    lista.forEach(item => {
-      html += `
-        <tr>
-          <td style="text-align: center; padding: 8px;">
-            <input type="checkbox" class="checkbox-func" value="${item.funcionalidade}" data-tipo="${item.tipo}" checked>
-          </td>
-          <td style="padding: 8px;">${item.funcionalidade || "-"}</td>
-        </tr>
-      `;
-    });
-
-      html += `
-          </tbody>
-        </table>
-
-        <div style="margin-top: 20px;">
-          <label for="observacoes" style="font-weight: bold; display: block; margin-bottom: 5px;">Observações:</label>
-          <textarea id="observacoes" style="width: 541px; height: 200px; resize: vertical; font-size: 14px; padding: 10px;">${textoObservacao}</textarea>
-        </div>
-
-        <div style="text-align: right; margin-top: 20px;">
-          <button id="fecharBotao">Fechar</button>
-          <button id="copiarFuncionalidades">Copiar e Salvar</button>
-        </div>
-      </div>
-    `;
-
-      conteudo.innerHTML = html;
-      document.getElementById("atualizar").addEventListener("click", async () => {
-        const observacoes = document.getElementById("observacoes").value.trim();
-        const dataApresentacao = document.getElementById("dataApresentacao").value;
-        const dataCadastro = document.getElementById("dataCadastro").value;
-      
-        const payload = {
-          razao_social: dadosEmpresa.razao_social,
-          observacao: observacoes,
-          data_apresentacao: dataApresentacao,
-          data_cadastro: dataCadastro
-        };
-      
-        try {
-          const resposta = await fetch("/salvar-observacao", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-          });
-      
-          const resultado = await resposta.json();
-      
-          if (resultado.sucesso) {
-            // Reabre o modal com os dados atualizados
-            abrirModalFuncionalidadeComCheckbox(dadosEmpresa.razao_social);
-          } else {
-            alert("❌ Erro ao salvar a observação.");
-          }
-        } catch (erro) {
-          console.error("Erro na atualização:", erro);
-          alert("❌ Erro ao conectar com o servidor.");
-        }
-      });
-      
-      modal.style.display = "flex";
-
-      document.getElementById("fecharBotao").addEventListener("click", () => {
-        window.location.reload();  
-      });
-
-      setTimeout(() => {
-
-        
-        const checkAll = document.getElementById("selecionarTodosFunc");
-        const checkboxes = document.querySelectorAll(".checkbox-func");
-
-        checkAll.addEventListener("change", () => {
-          checkboxes.forEach(cb => cb.checked = checkAll.checked);
-        });
-
-        checkboxes.forEach(cb => {
-          cb.addEventListener("change", () => {
-            const todosMarcados = [...checkboxes].every(cb => cb.checked);
-            checkAll.checked = todosMarcados;
-          });
-        });
-
-        document.getElementById("copiarFuncionalidades").addEventListener("click", () => {
-          const marcados = Array.from(document.querySelectorAll(".checkbox-func:checked"))
-            .map(cb => {
-              const tipo = cb.dataset.tipo || "funcionalidade";
-              return `✅ ${cb.value} (${tipo})`;
-            })
-            .join("\n");
-
-
-          const observacoes = document.getElementById("observacoes").value.trim();
-
-          const valorData = document.getElementById("dataApresentacao").value;
-          let dataApresentacaoBR = "-";
-          
-          if (valorData) {
-            const [ano, mes, dia] = valorData.split("-");
-            dataApresentacaoBR = `${dia}/${mes}/${ano}`;
-          }
-          
-          const texto = `📋 Resumo da Apresentação
-          
-Razão Social: ${dadosEmpresa.razao_social}
-Nome Fantasia: ${dadosEmpresa.nome_fantasia || "-"}
-CNPJ: ${dadosEmpresa.cnpj}
-Data Cadastro no Locsis: ${dataCadastroBR}
-Data Apresentação: ${dataApresentacaoBR}
-         
-Funcionalidades:
-${marcados || "- Não exigiu funcionalidades -"}
-          
-Observações:
-${observacoes || "-"}`;
-
-          // Copiar para clipboard
-          navigator.clipboard.writeText(texto)
-            .then(() => {
-              // Salvar observação no banco
-              const novaData = document.getElementById("dataApresentacao").value;
-
-              fetch("/salvar-observacao", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  razao_social: dadosEmpresa.razao_social,
-                  observacao: observacoes,
-                  data_apresentacao: novaData,
-                  data_cadastro: document.getElementById("dataCadastro").value
-                })
-                
-              })
-              
-                .then(res => res.json())
-                .then(res => {
-                  if (res.sucesso) {
-                    
-
-                    const botaoCopiar = document.getElementById("copiarFuncionalidades");
-                    botaoCopiar.textContent = "Copiado e salvo!";
-                    botaoCopiar.style.backgroundColor = "#28a745"; // verde sucesso
-                    botaoCopiar.style.color = "#fff";
-
-                    setTimeout(() => {
-                      botaoCopiar.textContent = "Copiar e Salvar";
-                      botaoCopiar.style.backgroundColor = "";
-                      botaoCopiar.style.color = "";
-                      abrirModalFuncionalidadeComCheckbox(dadosEmpresa.razao_social);
-                      
-                    }, 900);
-                  } else {
-                    alert("⚠️ Copiado, mas houve erro ao salvar a observação.");
-                  }
-                })
-                .catch(() => {
-                  alert("⚠️ Copiado, mas erro ao salvar observação no banco.");
-                });
-            })
-            .catch(() => alert("❌ Erro ao copiar o conteúdo."));
-        });
-
-      }, 0);
-    });
 }
 
+function listaTicket(cnpj, data_apresentacao){
+  
 
-
-// ⬇️ Carrega ao abrir a página
-carregarApresentacoes();
-
-function carregarFuncionalidadesRecentes() {
-  const container = document.getElementById("clientes_relatorio");
-  const mensagem = document.getElementById("mensagem-relatorio");
-
-  fetch("/apresentacoes-funcionalidades")
+  fetch(`/buscar-funcionalidade?cnpj=${encodeURIComponent(cnpj)}&data_apresentacao=${encodeURIComponent(data_apresentacao)}`)
     .then(res => res.json())
-    .then(dados => {
-      mensagem.style.display = "none";
-      const tabelaAntiga = container.querySelector("table");
-      if (tabelaAntiga) tabelaAntiga.remove();
+    .then(resposta => {
+      const tbody = document.getElementById("tabelaChurnBody");
+      tbody.innerHTML = "";
 
-      if (!dados || dados.length === 0) {
-        container.innerHTML = "<p style='margin-top: 20px;'>Nenhuma funcionalidade recente encontrada.</p>";
-        return;
+      if (resposta.sucesso && resposta.funcionalidades.length > 0) {
+        resposta.funcionalidades.forEach((funcionalidade, i) => {
+          const linha = document.createElement("tr");
+
+          linha.innerHTML = `
+            <td style="text-align: center;">
+              <input type="checkbox" checked>
+            </td>
+            <td style="padding: 6px;">${funcionalidade}</td>
+          `;
+
+          tbody.appendChild(linha);
+        });
+      } else {
+        const linha = document.createElement("tr");
+        linha.innerHTML = `<td colspan="2" style="text-align:center; padding: 10px; color: #999;">Nenhuma funcionalidade encontrada.</td>`;
+        tbody.appendChild(linha);
       }
-
-      const tabela = document.createElement("table");
-      tabela.classList.add("tabela-relatorio");
-
-      const colunas = ["razao_social", "nome_fantasia", "cnpj", "data_abertura", "titulo"];
-
-      const cabecalho = tabela.insertRow();
-      colunas.forEach(col => {
-        const th = document.createElement("th");
-        th.textContent = col.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
-        cabecalho.appendChild(th);
-      });
-
-      dados.forEach(item => {
-        const linha = tabela.insertRow();
-        linha.style.cursor = "pointer";
-
-        linha.addEventListener("click", () => {
-          abrirModalFuncionalidade(item);
-        });
-
-        colunas.forEach(col => {
-          const celula = linha.insertCell();
-          let valor = item[col] || "-";
-
-          if (col === "data_abertura" && valor !== "-") {
-            valor = valor.split("T")[0].split("-").reverse().join("/");
-          }
-
-          celula.textContent = valor;
-        });
-      });
-
-      container.appendChild(tabela);
     })
     .catch(err => {
-      console.error("Erro ao carregar funcionalidades recentes:", err);
-      container.innerHTML = "<p style='margin-top: 20px;'>Erro ao carregar dados.</p>";
+      console.error("Erro ao verificar funcionalidade:", err);
     });
 }
 
-document.getElementById("dataApresentacao").addEventListener("change", function () {
-  abrirModalFuncionalidadeComCheckbox(dadosEmpresa.razao_social);
-});
+function formatarDataIsoParaBR(dataIso) {
+  if (!dataIso) return "-";
+  const [ano, mes, dia] = dataIso.split("T")[0].split("-");
+  return `${dia}/${mes}/${ano}`;
+}
 
 function formatarCNPJ(cnpj) {
   return cnpj
@@ -580,3 +487,104 @@ function formatarCNPJ(cnpj) {
     .replace(/\.(\d{3})(\d)/, '.$1/$2')
     .replace(/(\d{4})(\d)/, '$1-$2');
 }
+
+ //* Muda temporariamente a aparência do botão.
+ //* @param {HTMLElement} btn         – botão que disparou a ação
+ //* @param {String} labelOk          – texto mostrado enquanto sucesso (ex.: "Copiado!")
+// * @param {Number} tempoMs = 1000   – quanto tempo (ms) manter o destaque
+
+function feedbackBotao(btn, labelOk, tempoMs = 900) {
+  // guarda o estado original
+  const txtOriginal   = btn.textContent;
+  const corBgOriginal = btn.style.backgroundColor;
+  const corTxtOriginal= btn.style.color;
+
+  // aplica destaque
+  btn.textContent      = labelOk;
+  btn.style.backgroundColor = "#28a745"; // verde
+  btn.style.color      = "#fff";
+
+  // reverte depois do tempo definido
+  setTimeout(() => {
+    btn.textContent      = txtOriginal;
+    btn.style.backgroundColor = corBgOriginal;
+    btn.style.color      = corTxtOriginal;
+  }, tempoMs);
+}
+
+// contador
+
+async function atualizarContadorApresentacao() {
+  try {
+    const resposta = await fetch('/contar-apresentacao');
+    if (!resposta.ok) throw new Error('Erro ao buscar quantidade de clientes.');
+    const dados = await resposta.json();
+
+    const contador = document.getElementById('contador');
+    contador.textContent = dados.total.toString().padStart(2, '0'); // força 2 dígitos ex: 01, 02, 10
+  } catch (erro) {
+    console.error('Erro ao atualizar contador:', erro);
+    document.getElementById('contador').textContent = '00';
+  }
+}
+
+// salvar apresentacao data e observação (data)
+
+function salvarDadosApresentacao(id) {
+  const novaData = document.getElementById("data_apresentacao").value;
+  const observacao = document.getElementById("observacoes").value;
+
+  fetch('/atualizar-apresentacao', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, novaData, observacao })
+  })
+    .then(r => r.json())
+    .then(resp => {
+      if (resp.sucesso) {
+        carregarApresentacao();
+        listaTicket(cnpjModalAtual, novaData);
+      } else {
+        alert('Erro: ' + resp.mensagem);
+      }
+    })
+    .catch(err => {
+      console.error('Erro ao salvar atualizar-apresentacao:', err);
+      alert('Falha na comunicação com o servidor.');
+    });
+}
+
+
+  // ---------- função que faz o fetch e popula a tbody ---------- 
+  function preencherTabela(cnpj, data_cliente){
+    fetch(`/buscar-churn-por-cnpj-data?cnpj=${encodeURIComponent(cnpj)}&data_cliente=${encodeURIComponent(data_cliente)}`)
+      .then(r => r.json())
+      .then(({ sucesso, churns })=>{
+          const tbody = document.getElementById("tabelaChurnBody");
+          tbody.innerHTML = "";
+          if (sucesso && churns.length){
+              churns.forEach(txt=>{
+                 tbody.insertAdjacentHTML("beforeend",
+                   `<tr>
+                      <td style="text-align:center;"><input type="checkbox" checked></td>
+                      <td style="padding:6px;">${txt}</td>
+                    </tr>`);
+              });
+          }else{
+              tbody.innerHTML =
+                `<tr><td colspan="2" style="text-align:center;padding:10px;color:#999;">
+                   Nenhum churn encontrado
+                 </td></tr>`;
+          }
+      })
+      .catch(e=>console.error("Erro ao buscar churns:", e));
+  }
+  
+
+
+
+
+
+
+
+  

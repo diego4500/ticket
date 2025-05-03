@@ -4,67 +4,82 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Apresentação</title>
+  <title>Apresentações</title>
   <link rel="stylesheet" href="style/style.css" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <!--Link da biblioteca para exportar excel -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
-
 </head>
 
 <body>
   <div id="nav-placeholder"></div>
- 
 
   <div class="main-content">
     <div class="centro">
       <div>
-        <div class="container">
-          <h1 class="tituloH">Cadastro das Apresentações</h1>
-          <form id="formAlterar" class="form-flex">
-            <div class="flexD">
-                <div class="alterarCliente">
-                    <label for="tenant">Razão Social:</label>
-                    <input type="text" id="tenant" required autocomplete="off" placeholder="Digite a razão social*" required />
-                </div>
-                <div>
-                    <label for="arquivo">Nome Fantasia:</label>
-                    <div class="sugestoes-container">
-                        <input type="text" id="nome_fantasia"  autocomplete="off" placeholder="Digite o nome fantasia" 
-                            autocomplete="off" />
-                        <div id="sugestoesB" class="sugestoes-lista"></div>
-                    </div>
-                </div>
-                <div class="cnpj-c">
-                  <label for="cnpj">CNPJ:</label>
-                  <input type="text" id="cnpjB" disabled autocomplete="off">
-              </div>
-         
-              <div class="date">
-                <label for="date">Data início RD: </label>
-                <input type="date" id="dataCliente">
-              </div>
-                
 
+      <!-- Cadastrar Churn  Inicio -->
+      <div class="container">
+        <div style="display: flex;">
+          <div style="display: flex; flex-direction: column; align-items: center;">
+            <label for="filtroCliente" style="margin-bottom: 2px;">Contador Apresentação</label>
+            <div class="display-container">
+              <div id="contador" class="display">00</div>
             </div>
-            <div class="flexG">    
-              <p class="grafana" id="botaoAtualizarRazao" style="cursor: pointer;">Atualizar Razão Social</p>     
-                <button class="alterar" type="submit">Cadastrar</button>
-                
-            </div>
-        </form>
-        </div>
-        <div class="container">
-          <h1 class="tituloH">Listagem das Apresentações</h1>
-          <div id="clientes_relatorio">
-            <div id="mensagem-relatorio" style="font-size: 16px; color: #777; margin-top: 20px;"></div>
           </div>
+          <h1 class="tituloHB">Apresentações</h1>
+         
+
+        </div>
+        <form id="formAlterar" class="form-flex">
+          <div class="flexD">
+              <div class="alterarCliente">
+                  <label for="tenant">Razão Social:</label>
+                  <input type="text" id="tenant" required autocomplete="off" placeholder="Digite a razão social*" required />
+              </div>
+              <div>
+                  <label for="arquivo">Nome Fantasia:</label>
+                  <div class="sugestoes-container">
+                      <input type="text" id="nome_fantasia"  autocomplete="off" placeholder="Digite o nome fantasia" autocomplete="off" disabled />
+                      <div id="sugestoesB" class="sugestoes-lista"></div>
+                  </div>
+              </div>
+              <div class="cnpj-c">
+                <label for="cnpj">CNPJ:</label>
+                <input type="text" id="cnpjB" disabled autocomplete="off" required>
+            </div>
+       
+            <div class="date">
+              <label for="date">Data Cadastro RD: </label>
+              <input type="date" id="dataRD" value="" required>
+            </div>
+            <div class="date">
+              <label for="date">Data Apresentação: </label>
+              <input type="date" id="dataApresentacao" value="" required>
+            </div>
+
+          </div>
+          <div class="flexG">    
+            <p class="grafana" id="botaoAtualizarRazao" style="cursor: pointer;">Atualizar Razão Social</p>     
+              <button class="alterar" type="submit">Cadastrar</button>
+              
+          </div>
+      </form>
+      </div>
+
+      <!-- Cadastrar Churn  Fim -->
+
+
+
+      <div class="container">
+        <h1 class="tituloH">Apresentação</h1>
+        <div id="clientes_relatorio">
+          <p id="mensagem-carregando" style="display:none">Carregando apresentações…</p>
+          <div id="mensagem-relatorio" style="font-size:16px;color:#777"></div>
+          <!-- aqui a tabela é injetada -->
         </div>
       </div>
-  
     </div>
+  </div>
   </div>
 
   <!-- ✅ Modal de Exibição -->

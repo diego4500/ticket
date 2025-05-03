@@ -19,7 +19,15 @@
 
       <!-- Cadastrar Churn  Inicio -->
       <div class="container">
-        <h1 class="tituloH">Cadastro Churn</h1>
+        <div style="display: flex;">
+          <div style="display: flex; flex-direction: column; align-items: center;">
+            <label for="filtroCliente" style="margin-bottom: 2px;">Contador Churn</label>
+            <div class="display-container">
+              <div id="contador" class="display">00</div>
+            </div>
+          </div>
+          <h1 class="tituloHB">Churns</h1>        
+        </div>
         <form id="formAlterar" class="form-flex">
           <div class="flexD">
               <div class="alterarCliente">
@@ -29,19 +37,18 @@
               <div>
                   <label for="arquivo">Nome Fantasia:</label>
                   <div class="sugestoes-container">
-                      <input type="text" id="nome_fantasia"  autocomplete="off" placeholder="Digite o nome fantasia" 
-                          autocomplete="off" />
+                      <input type="text" id="nome_fantasia"  autocomplete="off" placeholder="Digite o nome fantasia" autocomplete="off" disabled />
                       <div id="sugestoesB" class="sugestoes-lista"></div>
                   </div>
               </div>
               <div class="cnpj-c">
                 <label for="cnpj">CNPJ:</label>
-                <input type="text" id="cnpjB" disabled autocomplete="off">
+                <input type="text" id="cnpjB" disabled autocomplete="off" required>
             </div>
        
             <div class="date">
               <label for="date">Data do Churn: </label>
-              <input type="date" id="dataCliente" value="">
+              <input type="date" id="dataCliente" value="" required>
             </div>
               
 

@@ -5,6 +5,8 @@ let sugestoesDiv = sugestoesB;
 let itemSelecionadoRazao = false;
 let cnpjModalAtual = null;
 
+atualizarContadorChurn();
+
 
 tenantInput.addEventListener('input', () => {
   razaoSocialSugestoes(tenantInput.value);
@@ -88,10 +90,9 @@ function abrirModalAtualizarRazaoSocial() {
         <div class="flexC">
             <input type="file" id="arquivo" name="arquivo" required />
         </div>
-        <div style="text-align: right; padding: 10px;">
-          <button id="fecharBotao" type="button">FecharA</button>
-          
-          
+          <div style="text-align: right; padding: 10px;">
+          <button id="fecharBotao" type="button">Fechar</button>
+          <button type="submit">Enviar</button>
         </div>
       </form>
     </div>
@@ -566,6 +567,20 @@ function feedbackBotao(btn, labelOk, tempoMs = 900) {
     btn.style.backgroundColor = corBgOriginal;
     btn.style.color      = corTxtOriginal;
   }, tempoMs);
+}
+
+async function atualizarContadorChurn() {
+  try {
+    const resposta = await fetch('/contar-churn');
+    if (!resposta.ok) throw new Error('Erro ao buscar quantidade de churns.');
+    const dados = await resposta.json();
+
+    const contador = document.getElementById('contador');
+    contador.textContent = dados.total.toString().padStart(2, '0'); // força 2 dígitos ex: 01, 02, 10
+  } catch (erro) {
+    console.error('Erro ao atualizar contador:', erro);
+    document.getElementById('contador').textContent = '00';
+  }
 }
 
 

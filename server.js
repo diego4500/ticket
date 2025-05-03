@@ -214,7 +214,7 @@ app.get('/teste', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'teste.html'));
 });
 
-app.get('/apresentacao', autenticado, (req, res) => {
+app.get('/apresentacao',  (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'apresentacao.html'));
 });
 
@@ -1688,7 +1688,7 @@ app.get("/churns-por-razao", (req, res) => {
 
 */
 const fetch = require("node-fetch");
-
+/*
 // cadastrar apresentacao
 app.post("/cadastrar-apresentacao", (req, res) => {
   const { razao_social, nome_fantasia, cnpj, data_cliente } = req.body;
@@ -1715,6 +1715,7 @@ app.post("/cadastrar-apresentacao", (req, res) => {
     return res.status(200).json({ sucesso: true, mensagem: "✅ Apresentação cadastrada com sucesso!" });
   });
 });
+*/
 
 // listar apresentacao
 app.get("/apresentacoes", (req, res) => {
@@ -2524,6 +2525,144 @@ app.post("/cadastrar-churn", (req, res) => {
   });
 });
 
+
+// listar apresentação
+
+app.get("/listar-apresentacao", (req, res) => {
+  const sql = `
+    SELECT 
+      id, 
+      razao_social, 
+      nome_fantasia, 
+      cnpj, 
+      data_apresentacao, 
+      data_cadastro,
+      observacao
+    FROM apresentacao
+    ORDER BY data_apresentacao DESC
+  `;
+
+  db.query(sql, (err, resultados) => {
+    if (err) {
+      console.error("Erro ao buscar apresentações:", err);
+      return res.status(500).json({ erro: "Erro ao buscar apresentações." });
+    }
+
+    res.json(resultados);
+  });
+});
+
+// cadastrar apresentação
+
+app.post("/cadastrar-apresentacao", (req, res) => {
+  const { razao_social, nome_fantasia, cnpj, dataRD, data_apresentacao } = req.body;
+
+  if (!razao_social || !cnpj || !data_apresentacao) {
+    return res.status(400).json({ sucesso: false, mensagem: "Campos obrigatórios não preenchidos." });
+  }
+
+  const sql = `
+    INSERT INTO apresentacao 
+      (razao_social, nome_fantasia, cnpj, data_cadastro, data_apresentacao)
+    VALUES (?, ?, ?, ?, ?)
+  `;
+
+  db.query(sql, [razao_social, nome_fantasia, cnpj, dataRD, data_apresentacao], (err, resultado) => {
+    if (err) {
+      console.error("Erro ao cadastrar apresentação:", err);
+      return res.status(500).json({ sucesso: false, mensagem: "Erro ao cadastrar apresentação." });
+    }
+
+    res.json({ sucesso: true, mensagem: "Apresentação cadastrada com sucesso." });
+  });
+});
+
+// busca a listagem de funcionalidade na tabela ticket
+
+app.get('/buscar-funcionalidade', (req, res) => {
+  const { cnpj, data_apresentacao } = req.query;
+
+  if (!cnpj || !data_apresentacao) {
+    return res.status(400).json({ sucesso: false, mensagem: 'CNPJ ou data faltando.' });
+  }
+
+  const cnpjLimpo = cnpj.replace(/\D/g, '');
+
+  const sql = `
+    SELECT funcionalidade
+    FROM tickets
+    WHERE tipo = 'funcionalidade'
+      AND REPLACE(REPLACE(REPLACE(REPLACE(cnpj, '.', ''), '-', ''), '/', ''), ' ', '') = ?
+      AND DATE(data_abertura) = DATE(?)
+    ORDER BY id DESC
+  `;
+
+  db.query(sql, [cnpjLimpo, data_apresentacao], (err, resultados) => {
+    if (err) {
+      console.error("Erro ao buscar funcionalidades:", err);
+      return res.status(500).json({ sucesso: false, mensagem: "Erro interno ao buscar funcionalidades." });
+    }
+
+    const funcionalidades = resultados.map(r => r.funcionalidade).filter(f => f); // Remove nulos
+
+    res.json({ sucesso: true, funcionalidades: funcionalidades });
+  });
+});
+
+// contador apresentação
+
+app.get('/contar-apresentacao', (req, res) => {
+  const sql = 'SELECT COUNT(*) AS total FROM apresentacao';
+
+  db.query(sql, (err, resultado) => {
+    if (err) {
+      console.error("Erro ao contar apresentações:", err);
+      return res.status(500).json({ sucesso: false, mensagem: "Erro ao contar apresentações." });
+    }
+
+    const total = resultado[0]?.total || 0;
+    res.json({ sucesso: true, total });
+  });
+});
+
+// atualizar, salvar apresentacao
+
+app.put('/atualizar-apresentacao', (req, res) => {
+  const { id, novaData, observacao } = req.body;
+
+  if (!id || !novaData) {
+    return res.status(400).json({ sucesso: false, mensagem: 'ID ou data ausente.' });
+  }
+
+  const sql = `
+    UPDATE apresentacao
+    SET data_apresentacao = ?, observacao = ?
+    WHERE id = ?
+  `;
+
+  db.query(sql, [novaData, observacao || null, id], (err, resultado) => {
+    if (err) {
+      console.error("Erro ao atualizar apresentação:", err);
+      return res.status(500).json({ sucesso: false, mensagem: 'Erro ao atualizar a apresentação.' });
+    }
+
+    res.json({ sucesso: true });
+  });
+});
+
+app.get('/contar-churn', (req, res) => {
+  const sql = 'SELECT COUNT(*) AS total FROM churn';
+
+  db.query(sql, (err, resultado) => {
+    if (err) {
+      console.error("Erro ao contar churns:", err);
+      return res.status(500).json({ sucesso: false, mensagem: "Erro ao contar churns." });
+    }
+
+    const total = resultado[0]?.total || 0;
+    res.json({ sucesso: true, total });
+  });
+});
 
 
 

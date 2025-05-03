@@ -14,7 +14,8 @@
 </head>
 <body>
   <textarea id="campoTexto" placeholder="Fale algo..."></textarea><br>
-  <button id="btnFalar">🎤 Falar</button>
+  <button id="btnEscutar">🎤 Escutar</button>
+  <button id="btnEscrever">✍️ Escrever</button>
 
   <script>
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -24,11 +25,18 @@
       recognition.lang = 'pt-BR';
       recognition.interimResults = false;
 
-      const input = document.getElementById('campoTexto');
-      const botao = document.getElementById('btnFalar');
+      let textoAcumulado = '';
+      let escutando = false;
 
-      botao.addEventListener('click', () => {
-        recognition.start();
+      const input = document.getElementById('campoTexto');
+      const btnEscutar = document.getElementById('btnEscutar');
+      const btnEscrever = document.getElementById('btnEscrever');
+
+      btnEscutar.addEventListener('click', () => {
+        if (!escutando) {
+          escutando = true;
+          recognition.start();
+        }
       });
 
       recognition.onresult = (event) => {
@@ -44,34 +52,51 @@
         // Remove espaços antes da pontuação
         novoTexto = novoTexto.replace(/\s*([,.!?])/g, '$1');
 
-        // Adiciona espaço depois de pontuação final (não após vírgula)
+        // Adiciona espaço depois de pontuação final
         novoTexto = novoTexto.replace(/([.!?])(?=\S)/g, '$1 ');
 
-        // Deixa tudo minúsculo por padrão
+        // Tudo minúsculo por padrão
         novoTexto = novoTexto.toLowerCase().trim();
 
-        // ✅ Adiciona ponto final se não terminar com ., ! ou ?
-        const ultimaLetra = novoTexto.trim().slice(-1);
+        // Adiciona ponto final se necessário
+        const ultimaLetra = novoTexto.slice(-1);
         if (!['.', '!', '?'].includes(ultimaLetra)) {
           novoTexto += '.';
         }
 
+        textoAcumulado += ' ' + novoTexto;
+      };
+
+      recognition.onend = () => {
+        if (escutando) {
+          recognition.start(); // Reinicia se estiver escutando
+        }
+      };
+
+      recognition.onerror = (event) => {
+        console.error('Erro ao reconhecer:', event.error);
+      };
+
+      btnEscrever.addEventListener('click', () => {
+        escutando = false;
+        recognition.stop();
+
         // Pega texto anterior
         let textoAtual = input.value.trim();
+        let novo = textoAcumulado.trim();
 
-        // Concatena
-        let textoFinal = textoAtual ? textoAtual + ' ' + novoTexto : novoTexto;
+        // Junta textos
+        let textoFinal = textoAtual ? textoAtual + ' ' + novo : novo;
 
-        // Coloca maiúscula no início e após ponto
+        // Coloca letras maiúsculas após ponto e início
         textoFinal = textoFinal.replace(/(^\s*\w)|(\.\s*\w)/g, match => match.toUpperCase());
 
         // Atualiza textarea
         input.value = textoFinal;
-      };
 
-      recognition.onerror = (event) => {
-        alert('Erro ao reconhecer: ' + event.error);
-      };
+        // Limpa buffer
+        textoAcumulado = '';
+      });
     } else {
       alert('Seu navegador não suporta reconhecimento de voz.');
     }
