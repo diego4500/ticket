@@ -517,8 +517,7 @@ basta clicar no botação fechar ticket que esse localstorage será apagado e au
 os dados não serão mais puxados.
 */
 function aposSalvar() {
-    const campos = ["razao_social", "cnpjB", "clienteB",  "nome_fantasiaB", "chamado"];
-
+    const campos = ["razao_social", "cnpjB", "clienteB", "nome_fantasiaB", "chamado"];
 
     campos.forEach(campo => {
         const valor = localStorage.getItem(campo);
@@ -527,12 +526,15 @@ function aposSalvar() {
                 const check = document.getElementById("clienteB");
                 check.checked = valor === "true";
                 check.disabled = true;
-
+            } else if (campo === "cnpjB") {
+                document.getElementById("cnpjB").value = formatarCNPJ(valor);
             } else {
                 document.getElementById(campo).value = valor;
             }
         }
     });
+
+    
 }
 
 /*

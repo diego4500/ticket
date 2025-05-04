@@ -80,13 +80,6 @@ body {
     margin-right: 36px;
 }
 
-.tabela-relatorio td.razao-social {
-  max-width: 420px;        /* ajuste como preferir */
-  white-space: nowrap;     /* não deixa quebrar linha */
-  overflow: hidden;        /* esconde o excedente */
-  text-overflow: ellipsis; /* mostra “…” no final */
-}
-
 .flexD {
     display: flex;
 
@@ -178,6 +171,17 @@ body {
     margin-bottom: 40px;
 }
 
+.contentD {
+  width: 100%;
+  height: auto;
+  display: flex;
+  flex-direction: column; /* ← adiciona essa linha */
+  justify-content: center;
+  align-items: center;    /* centraliza os filhos no eixo horizontal */
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
 
 #tabela-relatorio {
     width: 100%;
@@ -213,9 +217,13 @@ body {
     width: 100%;
   }
 
-.tituloH {
+.tituloH, .tituloDashboard {
     text-align: left;
     font-size: 25px;
+}
+
+.tituloDashboard{
+ color: whitesmoke;
 }
 .tituloHB {
   text-align: left;
@@ -284,6 +292,10 @@ body {
     margin-top: 5px;
 }
 
+.fundoDashboard{
+  background-color: #333554;
+}
+
 .containerB {
     max-width: 90%;
     width: 100%;
@@ -292,7 +304,21 @@ body {
     border-radius: 10px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     margin-top: 5px;
+    min-height: 76vh;
 }
+
+.containerC{
+  max-width: 90%;
+  width: 100%;
+  background: #1F1F2F;
+  padding: 10px 50px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  margin-top: 5px;
+  min-height: 76vh;
+}
+
+
 
 .cliente-card {
     display: flex;
@@ -1195,4 +1221,266 @@ table.tabela-relatorio th {
   letter-spacing: 5px;
   text-align: center;
 }
+
+/* Dashboard */
+
+.grid-dashboard {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 36% 70%;
+  gap: 12px;
+  height: 89%;
+}
+
+
+.bloco-dashboard {
  
+  border: 2px solid rgba(255, 255, 255, 0.178);
+  border-radius: 4px;
+  min-height: 200px; /* ajuste conforme desejar */
+  padding: 10px;
+  color: white;
+}
+
+.bloco-dashboardB {
+  display: flex;
+ 
+  padding: 10px;
+  color: white;
+  min-height: 200px;
+  gap: 10px;
+}
+.bloco-dashboardC {
+ 
+
+  min-height: 200px; /* ajuste conforme desejar */
+  padding: 10px;
+  color: white;
+}
+
+.divDashboard {
+  display: flex;
+  flex-direction: column;
+  height: 92vh; /* ou outra unidade baseada em viewport */
+}
+
+
+.containerC {
+  display: flex;
+  flex-direction: column;
+  min-height: 76vh; /* já está ótimo */
+}
+
+/* style da tabela cards aberto*/
+.tabela-simples {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+
+
+.tabela-simples td {
+  border-bottom: 1px solid white;
+  padding: 8px;
+  color: white;
+}
+
+.tabela-simples tr td:first-child {
+  width: 80%;
+}
+
+.tabela-simples tr td:last-child {
+  width: 20%;
+  text-align: right; /* opcional */
+}
+
+.corLetras{
+  color: #ffd000;
+  font-size: 20px;
+}
+
+.corLetrasB {
+  color: #ffd000;
+  font-size: 30px;
+  animation: luz-pulsante 1.8s infinite ease-in-out;
+}
+
+@keyframes luz-pulsante {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+
+
+.sub-bloco70, .sub-bloco30 {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  font-size: 24px;
+  height: 100%;
+}
+
+.sub-bloco70 {
+  flex: 7;
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+
+
+.topo70 {
+  flex: 2;
+  
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+}
+
+.base70 {
+  flex: 8;
+  
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+}
+
+.personagem{
+  width: 60%;
+}
+
+.sub-bloco30 {
+  flex: 3;
+ 
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.metade30B {
+  flex: 1;
+  background-color: #FFD9E1;
+  border: 2px solid red;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgb(134, 1, 1);
+  font-weight: bold;
+  padding: 15px;
+  border-radius: 10px;
+  
+}
+
+.metade30A {
+  flex: 1;
+  background-color: #DBF2F2;
+  border: 2px solid rgb(0, 20, 0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgb(1, 73, 1);
+  font-weight: bold;
+  padding: 15px;
+  border-radius: 10px;
+}
+
+.wrapperDiv {
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* ou defina uma altura exata, ex: 200px */
+}
+
+.metade30A {
+  flex: 2; /* 20% */
+ 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  font-weight: bold;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+  
+}
+
+.metade30B {
+  flex: 8; /* 80% */
+  
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  font-weight: bold;
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+}
+
+
+.sub-bloco30 {
+  display: flex;
+  height: 100%; /* necessário para aplicar proporção corretamente */
+  gap: 10px;
+}
+
+.metade30A,
+.metade30B {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  
+  border-radius: 10px;
+  overflow: hidden;
+  min-width: 140px;
+}
+
+.topo {
+  flex: 2;
+  width: 100%;
+  
+  display: flex;
+  align-items: flex-start;     /* alinha ao topo */
+  justify-content: flex-start; /* alinha à esquerda */
+  
+  font-weight: bold;
+  font-size: 15px;
+  padding: 10px; /* espaçamento interno */
+}
+
+
+.base {
+  flex: 8;
+  
+  display: flex;
+  align-items: center;
+  justify-content: center;
+ 
+  font-size: 55px;
+}
+
+canvas {
+  max-width: 100%;
+  max-height: 84%;
+}
+
+
+
+
+
+
+
+
+
+
+
+

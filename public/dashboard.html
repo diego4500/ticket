@@ -6,25 +6,68 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
     <link rel="stylesheet" href="style/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+
+
 
 </head>
 
-<body>
+<body class="fundoDashboard">
     <div id="nav-placeholder"></div>
- 
-   <div class="main-content">
-    <div class="content">
-        <div class="containerB">
-            <h1 class="tituloH">Dashboard</h1>
-            <div class="div-imagem">
-                <img src="imagens/atendente.png" alt="Imagem dos atendentes">
+
+    <div class="main-content">
+        <div class="contentD">
+            <div class="containerC">
+                <div>
+                    <h1 class="tituloDashboard">Dashboard</h1>
+                </div>
+                <div class="grid-dashboard">
+                    <div class="bloco-dashboardC">
+
+                        <h3>Cards em Aberto</h3>
+                        <table class="tabela-simples">
+                            <tr>
+                                <td><span class="corLetras">Diego Rocha</span></td>
+                                <td><span class="corLetrasB" id="diego">15</span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="corLetras">Cássio Lindembergue</span></td>
+                                <td><span class="corLetrasB" id="cassio">20</span></td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="bloco-dashboardB">
+
+                        <div class="sub-bloco70">
+                            <div class="topo70"></div>
+                            <div class="base70"><img class="personagem" src="imagens/personagem.png" alt=""></div>
+                        </div>
+                        <div class="sub-bloco30">
+                            <div class="metade30A">
+                              <div class="topo">Cliente Mês:</div>
+                              <div class="base">8</div>
+                            </div>
+                            <div class="metade30B">
+                              <div class="topo">Churn Mês:</div>
+                              <div class="base">2</div>
+                            </div>
+                          </div>
+                          
+                    </div>
+
+                    <div class="bloco-dashboard">
+                        <canvas id="graficoBarras" class="graficoApresentacao"></canvas>
+                    </div>
+                    <div class="bloco-dashboard">Bloco 4</div>
+                </div>
+
             </div>
-            
         </div>
     </div>
-   </div>
-   <footer id="footer-placeholder" class="rodape"></footer>
-        <script type="module" src="script/main.js"></script>
+    <footer id="footer-placeholder" class="rodape"></footer>
+    <script type="module" src="script/main.js"></script>
+    <script  src="script/dashboard.js"></script>
 </body>
 
 </html>
