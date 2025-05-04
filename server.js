@@ -226,6 +226,10 @@ app.get('/importar', autenticado, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'importar_razao.html'));
 });
 
+app.get('/dashboard_tv', autenticado, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'dashboard_tv.html'));
+});
+
 
 
 
@@ -2687,6 +2691,46 @@ app.get('/contar-churn', (req, res) => {
 });
 
 
+// rota grafico apresentacao
+
+app.get('/dados-apresentacoes-semana', (req, res) => {
+  const hoje = new Date();
+  const semanas = [];
+
+  for (let i = 7; i >= 0; i--) {
+    const inicio = new Date(hoje);
+    inicio.setDate(inicio.getDate() - i * 7);
+    inicio.setHours(0, 0, 0, 0);
+
+    const fim = new Date(hoje);
+    fim.setDate(fim.getDate() - (i - 1) * 7);
+    fim.setHours(0, 0, 0, 0);
+
+    const label = i === 0 ? 'Essa Semana' : `há ${i} semanas`;
+    semanas.push({ label, inicio, fim });
+  }
+
+  const querys = semanas.map((semana) => {
+    return new Promise((resolve, reject) => {
+      const sql = `
+        SELECT COUNT(*) AS total 
+        FROM apresentacao 
+        WHERE data_apresentacao >= ? AND data_apresentacao < ?
+      `;
+      db.query(sql, [semana.inicio, semana.fim], (err, result) => {
+        if (err) return reject(err);
+        resolve({ label: semana.label, total: result[0].total, dataRef: semana.inicio });
+      });
+    });
+  });
+
+  Promise.all(querys)
+    .then(resultados => res.json(resultados))
+    .catch(err => {
+      console.error("Erro ao buscar dados:", err);
+      res.status(500).json({ erro: "Erro ao buscar dados de apresentações" });
+    });
+});
 
 
 
