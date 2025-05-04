@@ -2695,16 +2695,23 @@ app.get('/contar-churn', (req, res) => {
 
 app.get('/dados-apresentacoes-semana', (req, res) => {
   const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0); // zera hora
+
+  // Força o início da semana sempre em segunda-feira
+  const diaDaSemana = hoje.getDay(); // 0 = domingo, 1 = segunda
+  const diferencaSegunda = diaDaSemana === 0 ? -6 : 1 - diaDaSemana;
+  const segundaAtual = new Date(hoje);
+  segundaAtual.setDate(hoje.getDate() + diferencaSegunda);
+
   const semanas = [];
 
   for (let i = 7; i >= 0; i--) {
-    const inicio = new Date(hoje);
+    const inicio = new Date(segundaAtual);
     inicio.setDate(inicio.getDate() - i * 7);
     inicio.setHours(0, 0, 0, 0);
 
-    const fim = new Date(hoje);
-    fim.setDate(fim.getDate() - (i - 1) * 7);
-    fim.setHours(0, 0, 0, 0);
+    const fim = new Date(inicio);
+    fim.setDate(fim.getDate() + 7); // fim da semana
 
     const label = i === 0 ? 'Essa Semana' : `há ${i} semanas`;
     semanas.push({ label, inicio, fim });
@@ -2731,6 +2738,7 @@ app.get('/dados-apresentacoes-semana', (req, res) => {
       res.status(500).json({ erro: "Erro ao buscar dados de apresentações" });
     });
 });
+
 
 
 
