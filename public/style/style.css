@@ -1296,12 +1296,12 @@ table.tabela-relatorio th {
 }
 
 .corLetras{
-  color: #ffd000;
+  color: whitesmoke;
   font-size: 20px;
 }
 
 .corLetrasB {
-  color: #ffd000;
+  color: whitesmoke;
   font-size: 30px;
   animation: luz-pulsante 1.8s infinite ease-in-out;
 }
@@ -1370,12 +1370,13 @@ table.tabela-relatorio th {
 
 .metade30B {
   flex: 1;
-  background-color: #FFD9E1;
-  border: 2px solid red;
+  background-color: #0000FF;
+ 
+ /* border: 2px solid red;*/
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgb(134, 1, 1);
+  color: rgb(255, 255, 255);
   font-weight: bold;
   padding: 15px;
   border-radius: 10px;
@@ -1384,12 +1385,13 @@ table.tabela-relatorio th {
 
 .metade30A {
   flex: 1;
-  background-color: #DBF2F2;
-  border: 2px solid rgb(0, 20, 0);
+  background-color: #0066FF;
+  
+  /*border: 2px solid rgb(0, 20, 0);*/
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgb(1, 73, 1);
+  color: rgb(255, 255, 255);
   font-weight: bold;
   padding: 15px;
   border-radius: 10px;
@@ -1480,6 +1482,20 @@ canvas {
   overflow: hidden;        /* esconde o que passar */
   text-overflow: ellipsis; /* adiciona os ... */
 }
+
+@keyframes luz-pulsante {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.barra-piscando {
+  animation: luz-pulsante 1.5s infinite ease-in-out;
+}
+
 
 
 
