@@ -2739,6 +2739,111 @@ app.get('/dados-apresentacoes-semana', (req, res) => {
     });
 });
 
+// rota clientes ativos gráfico
+
+app.get('/clientes-ativos-mensal', (req, res) => {
+  const query = `
+    SELECT t1.data_cadastro, t1.resultado
+    FROM n_clientes_ativos t1
+    INNER JOIN (
+        SELECT DATE_FORMAT(MAX(data_cadastro), '%Y-%m-01') AS primeiro_dia_mes, MAX(data_cadastro) AS ultima_data
+        FROM n_clientes_ativos
+        GROUP BY DATE_FORMAT(data_cadastro, '%Y-%m')
+    ) t2 ON t1.data_cadastro = t2.ultima_data
+    ORDER BY t1.data_cadastro
+  `;
+
+  db.query(query, (err, resultados) => {
+    if (err) {
+      console.error("Erro ao buscar clientes ativos por mês:", err);
+      return res.status(500).json({ erro: 'Erro ao buscar dados' });
+    }
+
+    res.json(resultados);
+  });
+});
+
+// rota para buscar os tickets em aberto do Diego Rocha
+app.get('/tickets-abertos-diego', (req, res) => {
+  const query = `
+    SELECT COUNT(*) AS total
+    FROM tickets
+    WHERE LOWER(atendente) = 'diego rocha' AND status = 'aberto';
+  `;
+
+  db.query(query, (err, resultados) => {
+    if (err) {
+      console.error("❌ Erro ao buscar tickets em aberto do Diego:", err);
+      return res.status(500).json({ erro: "Erro ao buscar dados" });
+    }
+
+    res.json({ total: resultados[0].total });
+  });
+});
+
+//rota para buscar os tickets em aberto do Diego Rocha
+
+
+app.get('/tickets-abertos-cassio', (req, res) => {
+  const query = `
+    SELECT COUNT(*) AS total
+    FROM tickets
+    WHERE LOWER(atendente) = 'cassio lindembergue' AND status = 'aberto';
+  `;
+
+  db.query(query, (err, resultados) => {
+    if (err) {
+      console.error("❌ Erro ao buscar tickets em aberto do Cassio:", err);
+      return res.status(500).json({ erro: "Erro ao buscar dados" });
+    }
+
+    res.json({ total: resultados[0].total });
+  });
+});
+
+// rota conta clientes no mes
+
+app.get('/clientes-mes', (req, res) => {
+  const query = `
+    SELECT COUNT(*) AS total
+    FROM razao_social
+    WHERE MONTH(data_cliente) = MONTH(CURDATE())
+      AND YEAR(data_cliente) = YEAR(CURDATE());
+  `;
+
+  db.query(query, (err, resultados) => {
+    if (err) {
+      console.error("❌ Erro ao contar clientes do mês:", err);
+      return res.status(500).json({ erro: 'Erro ao buscar dados' });
+    }
+
+    res.json({ total: resultados[0].total });
+  });
+});
+
+// contagem churn do mês
+
+app.get('/churns-mes', (req, res) => {
+  const query = `
+    SELECT COUNT(*) AS total
+    FROM churn
+    WHERE MONTH(data_churn) = MONTH(CURDATE())
+      AND YEAR(data_churn) = YEAR(CURDATE());
+  `;
+
+  db.query(query, (err, resultados) => {
+    if (err) {
+      console.error("❌ Erro ao contar churns do mês:", err);
+      return res.status(500).json({ erro: 'Erro ao buscar dados' });
+    }
+
+    res.json({ total: resultados[0].total });
+  });
+});
+
+
+
+
 
 
 
