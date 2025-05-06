@@ -202,7 +202,7 @@ app.get('/cadastrar', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'cadastrar.html'));
 });
 
-app.get('/churn', (req, res) => {
+app.get('/churn', autenticado, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'churn.html'));
 });
 
@@ -214,7 +214,7 @@ app.get('/teste', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'teste.html'));
 });
 
-app.get('/apresentacao',  (req, res) => {
+app.get('/apresentacao', autenticado, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'apresentacao.html'));
 });
 
