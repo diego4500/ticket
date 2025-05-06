@@ -1976,7 +1976,9 @@ app.post('/importar_grafana', upload.single('arquivo'), (req, res) => {
         const diasSemAcesso = parseInt(normalizado["dias sem acesso"] || 0);
         const faturamento = parseInt(normalizado["qtd. fat. realizados"] || 0);
 
-        const cnpjEncontrado = (tenant.match(/\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}/) || [])[0];
+        const cnpjEncontrado = (tenant.match(/\d{14}|\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}/) || [])[0];
+
+        
 
         if (cnpjEncontrado) {
           const cnpj = cnpjEncontrado.replace(/\D/g, '');
