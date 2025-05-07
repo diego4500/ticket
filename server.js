@@ -2743,27 +2743,30 @@ app.get('/dados-apresentacoes-semana', (req, res) => {
 
 // rota clientes ativos gráfico
 
-app.get('/clientes-ativos-mensal', (req, res) => {
-  const query = `
-    SELECT t1.data_cadastro, t1.resultado
-    FROM n_clientes_ativos t1
+app.get("/clientes-ativos-mensal", (req, res) => {
+  const sql = `
+    SELECT n1.*
+    FROM n_clientes_ativos n1
     INNER JOIN (
-        SELECT DATE_FORMAT(MAX(data_cadastro), '%Y-%m-01') AS primeiro_dia_mes, MAX(data_cadastro) AS ultima_data
+        SELECT MAX(id) AS max_id
         FROM n_clientes_ativos
-        GROUP BY DATE_FORMAT(data_cadastro, '%Y-%m')
-    ) t2 ON t1.data_cadastro = t2.ultima_data
-    ORDER BY t1.data_cadastro
+        GROUP BY YEAR(data_cadastro), MONTH(data_cadastro)
+    ) AS ultimos
+    ON n1.id = ultimos.max_id
+    ORDER BY n1.data_cadastro;
   `;
 
-  db.query(query, (err, resultados) => {
+  db.query(sql, (err, resultados) => {
     if (err) {
-      console.error("Erro ao buscar clientes ativos por mês:", err);
-      return res.status(500).json({ erro: 'Erro ao buscar dados' });
+      console.error("Erro ao buscar clientes ativos:", err);
+      return res.status(500).json({ erro: "Erro ao buscar dados" });
     }
-
     res.json(resultados);
   });
 });
+
+
+
 
 // rota para buscar os tickets em aberto do Diego Rocha
 app.get('/tickets-abertos-diego', (req, res) => {
