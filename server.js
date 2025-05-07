@@ -73,11 +73,11 @@ app.use(session({
 
 // Rota para inserir dados no banco
 app.post('/salvar-ticket', (req, res) => {
+  const { format, utcToZonedTime } = require('date-fns-tz');
+
   const {
     razao_social,
     cnpj,
-    data_abertura,
-    hora,
     status,
     ticket,
     card,
@@ -94,16 +94,20 @@ app.post('/salvar-ticket', (req, res) => {
     chamado
   } = req.body;
 
+  const fusoHorario = 'America/Sao_Paulo';
   const agora = new Date();
-  let statusFinal = status;
+  const zoned = utcToZonedTime(agora, fusoHorario);
 
-  // Força status 'fechado' se for do tipo churn ou sistema
+  const data_abertura = format(zoned, 'yyyy-MM-dd');
+  const hora = format(zoned, 'HH:mm:ss');
+
+  let statusFinal = status;
   if (tipo === 'churn' || tipo === 'sistema') {
     statusFinal = 'fechado';
   }
 
-  const data_fechamento = statusFinal.toLowerCase() === 'fechado' ? agora.toISOString().split('T')[0] : null;
-  const hora_fechamento = statusFinal.toLowerCase() === 'fechado' ? agora.toTimeString().split(' ')[0] : null;
+  const data_fechamento = statusFinal.toLowerCase() === 'fechado' ? data_abertura : null;
+  const hora_fechamento = statusFinal.toLowerCase() === 'fechado' ? hora : null;
 
   const sql = `
     INSERT INTO tickets (
@@ -127,8 +131,7 @@ app.post('/salvar-ticket', (req, res) => {
       console.error('Erro ao inserir ticket:', err);
       return res.status(500).json({ error: 'Erro ao salvar o ticket' });
     }
-  
-    // Atualiza cliente para 0 se for churn
+
     if (tipo === "churn" && cliente === true) {
       const atualizarClienteSQL = `
         UPDATE razao_social
@@ -143,10 +146,11 @@ app.post('/salvar-ticket', (req, res) => {
         }
       });
     }
-  
+
     res.status(201).json({ message: 'Ticket salvo com sucesso!', id: result.insertId });
   });
 });
+
 
 
 
