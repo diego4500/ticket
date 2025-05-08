@@ -352,7 +352,7 @@ function cancelarTrue() {
 }
 
 function cancelarFalse() {
-    document.getElementById("cancelar").textContent = "Fechar Ticket";
+    document.getElementById("cancelar").textContent = "Limpar Formulário";
     localStorage.setItem("cancelar", "false");
 }
 
@@ -361,7 +361,7 @@ function verificarCancelar() {
         document.getElementById("cancelar").textContent = "Cancelar";
     }
     else {
-        document.getElementById("cancelar").textContent = "Fechar Ticket";
+        document.getElementById("cancelar").textContent = "Limpar Formulário";
     }
 }
 
