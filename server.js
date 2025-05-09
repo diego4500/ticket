@@ -726,6 +726,7 @@ app.get('/exportar-excel-churn', autenticado, async (req, res) => {
         t.atendente,
         t.tipo,
         t.status,
+        t.churn,
         t.descricao,
         t.chamado,
         rs.data_cliente,
@@ -755,6 +756,7 @@ app.get('/exportar-excel-churn', autenticado, async (req, res) => {
         { key: "atendente", header: "Atendente" },
         { key: "tipo", header: "Tipo" },
         { key: "status", header: "Status" },
+        { key: "churn", header: "Churn" },
         { key: "descricao", header: "Descrição" },
         { key: "chamado", header: "Chamado" },
         { key: "data_cliente", header: "Data do Cliente" },
@@ -794,7 +796,7 @@ app.get('/exportar-excel-churn', autenticado, async (req, res) => {
       sheet.views = [{ state: 'frozen', xSplit: 1, ySplit: 1 }];
       sheet.autoFilter = {
         from: 'A1',
-        to: `K1` // 11ª coluna = K
+        to: `L1`// 12ª coluna = K
       };
 
       res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
