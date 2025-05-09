@@ -73,7 +73,10 @@ app.use(session({
 
 // Rota para inserir dados no banco
 app.post('/salvar-ticket', (req, res) => {
-  const { format, utcToZonedTime } = require('date-fns-tz');
+  const { utcToZonedTime } = require('date-fns-tz');
+  const { format } = require('date-fns');
+  
+
 
   const {
     razao_social,
