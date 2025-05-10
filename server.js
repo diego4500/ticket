@@ -275,37 +275,53 @@ app.get('/tickets', (req, res) => {
 // Rota modal adicionar descrição
 
 app.post('/atualizar-descricao', (req, res) => {
-  const { ticket, descricao, status, card, bug = 0, melhoria = 0 } = req.body;
+  let { ticket, descricao, status, card, bug = 0, melhoria = 0 } = req.body;
 
+  /* ------------------------------------------------------------------
+     Garante exclusividade:
+     - se veio bug = 1, força melhoria = 0
+     - se veio melhoria = 1, força bug = 0
+     - se o front mandar os dois = 1 por engano, mantém só o primeiro
+  ------------------------------------------------------------------ */
+  if (bug == 1) {
+    bug = 1;
+    melhoria = 0;
+  } else if (melhoria == 1) {
+    bug = 0;
+    melhoria = 1;
+  } else {
+    bug = 0;
+    melhoria = 0;
+  }
 
-
-  const isFechado = status.toLowerCase() === "fechado";
+  const isFechado = status.toLowerCase() === 'fechado';
 
   const sql = `
-  UPDATE tickets
-  SET descricao = ?,
-      status = ?,
-      card = ?,
-      bug = ?,
-      melhoria = ?
+    UPDATE tickets SET
+      descricao       = ?,
+      status          = ?,
+      card            = ?,
+      bug             = ?,
+      melhoria        = ?
       ${isFechado ? `,
-      data_fechamento = IF(data_fechamento IS NULL, CURDATE(), data_fechamento),
+      data_fechamento = IF(data_fechamento  IS NULL, CURDATE(), data_fechamento),
       hora_fechamento = IF(hora_fechamento IS NULL, CURTIME(), hora_fechamento)` : ''}
-  WHERE ticket = ?
-`;
+    WHERE ticket = ?
+  `;
 
-
-const params = [descricao, status, card, bug, melhoria, ticket];
-
-  db.query(sql, params, (err, result) => {
-    if (err) {
-      console.error("Erro ao atualizar:", err);
-      return res.status(500).json({ sucesso: false });
+  db.query(
+    sql,
+    [descricao, status, card || null, bug, melhoria, ticket],
+    (err, resultado) => {
+      if (err) {
+        console.error('❌ Erro ao atualizar descrição:', err);
+        return res.status(500).json({ sucesso: false });
+      }
+      res.json({ sucesso: true });
     }
-
-    res.json({ sucesso: true });
-  });
+  );
 });
+
 
 
 // limita o carregamento do relatório de 20 em 20
