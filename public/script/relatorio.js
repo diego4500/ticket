@@ -60,6 +60,12 @@ const carregarTicketsFiltrado = async () => {
 };
 
 const adicionarNaTabela = (dados) => {
+  console.log("📦 dados recebidos:", dados.map(d => ({
+    ticket: d.ticket,
+    bug: d.bug,
+    melhoria: d.melhoria,
+    tipos: { bug: typeof d.bug, melhoria: typeof d.melhoria }
+  })));
   dados.forEach(item => {
     console.log("Cliente do ticket", item.ticket, "->", item.cliente);
     const linha = tabela.insertRow();
@@ -302,8 +308,8 @@ document.getElementById("formEditarDescricao").addEventListener("submit", async 
               <p><strong>Tipo do card: </strong></p>
               <select id="tipoCard" name="tipo">
                 <option value="">Selecione</option>
-                 <option value="bug" ${item.bug === 1 ? "selected" : ""}>Bug</option>
-               <option value="melhoria" ${item.melhoria === 1 ? "selected" : ""}>Melhoria</option>
+                <option value="bug"      ${Number(item.bug)      === 1 ? "selected" : ""}>Bug</option>
+<option value="melhoria" ${Number(item.melhoria) === 1 ? "selected" : ""}>Melhoria</option>
               </select>
             </div>
           </div>
