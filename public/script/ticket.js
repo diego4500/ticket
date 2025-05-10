@@ -160,7 +160,8 @@ formulario.addEventListener("submit", async (e) => {
     const churnTicket = document.querySelector("#churn_cadastrada")?.value || "";
     const funcionalidadeTicket = document.querySelector("#funcionalidade_cadastrada")?.value || "";
     const sistemasTicket = document.querySelector("#sistemas_cadastrada")?.value || "";
-    const impeditivo = document.getElementById("impeditivo").checked ? 1 : 0;
+    const impeditivo = document.getElementById("impeditivo")?.checked ? 1 : 0;
+
 
 
 
