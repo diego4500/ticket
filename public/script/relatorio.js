@@ -116,8 +116,8 @@ const adicionarNaTabela = (dados) => {
               <p><strong>Tipo do card: </strong></p>
              <select id="tipoCard" name="tipo">
                 <option value="">Selecione</option>
-                 <option value="bug" ${item.bug === 1 ? "selected" : ""}>Bug</option>
-               <option value="melhoria" ${item.melhoria === 1 ? "selected" : ""}>Melhoria</option>
+                  <option value="bug"      ${Number(item.bug)      === 1 ? "selected" : ""}>Bug</option>
+                  <option value="melhoria" ${Number(item.melhoria) === 1 ? "selected" : ""}>Melhoria</option>
               </select>
 
             </div>
@@ -275,6 +275,7 @@ document.getElementById("formEditarDescricao").addEventListener("submit", async 
           }
         });
 // teste
+
         const conteudoAtualizado = `
           <div>
             <p><strong>Ticket:</strong> ${dados.ticket}</p>
