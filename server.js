@@ -92,6 +92,7 @@ app.post('/salvar-ticket', (req, res) => {
     atendente,
     churn,
     funcionalidade,
+    impeditivo,
     sistema,
     nome_fantasia,
     chamado
@@ -116,18 +117,22 @@ app.post('/salvar-ticket', (req, res) => {
     INSERT INTO tickets (
       razao_social, cnpj, data_abertura, hora, status, ticket, card, titulo,
       menu_duvida, descricao, cliente, tipo, atendente,
-      churn, funcionalidade, sistema, nome_fantasia, chamado,
+      churn, funcionalidade, impeditivo, sistema, nome_fantasia, chamado,
       data_fechamento, hora_fechamento
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
   const valores = [
     razao_social, cnpj, data_abertura, hora, statusFinal, ticket, card, titulo,
     menu_duvida, descricao, cliente, tipo, atendente,
-    churn, funcionalidade, sistema, nome_fantasia, chamado,
+    churn, funcionalidade, impeditivo, sistema, nome_fantasia, chamado,
     data_fechamento, hora_fechamento
   ];
+
+  console.log("valores:", valores.length, valores);
+  console.log("Total de colunas:", 21);
+console.log("Total de valores:", valores.length);
 
   db.query(sql, valores, (err, result) => {
     if (err) {
@@ -275,14 +280,8 @@ app.get('/tickets', (req, res) => {
 // Rota modal adicionar descrição
 
 app.post('/atualizar-descricao', (req, res) => {
-  let { ticket, descricao, status, card, bug = 0, melhoria = 0 } = req.body;
+  let { ticket, descricao, status, card, bug = 0, melhoria = 0, impeditivo = null } = req.body;
 
-  /* ------------------------------------------------------------------
-     Garante exclusividade:
-     - se veio bug = 1, força melhoria = 0
-     - se veio melhoria = 1, força bug = 0
-     - se o front mandar os dois = 1 por engano, mantém só o primeiro
-  ------------------------------------------------------------------ */
   if (bug == 1) {
     bug = 1;
     melhoria = 0;
@@ -296,22 +295,30 @@ app.post('/atualizar-descricao', (req, res) => {
 
   const isFechado = status.toLowerCase() === 'fechado';
 
-  const sql = `
-    UPDATE tickets SET
-      descricao       = ?,
-      status          = ?,
-      card            = ?,
-      bug             = ?,
-      melhoria        = ?
-      ${isFechado ? `,
-      data_fechamento = IF(data_fechamento  IS NULL, CURDATE(), data_fechamento),
-      hora_fechamento = IF(hora_fechamento IS NULL, CURTIME(), hora_fechamento)` : ''}
-    WHERE ticket = ?
-  `;
+  const camposBase = `
+  descricao       = ?,
+  status          = ?,
+  card            = ?,
+  bug             = ?,
+  melhoria        = ?,
+  impeditivo      = ?
+`;
+
+const camposFechamento = `
+  , data_fechamento = IF(data_fechamento IS NULL, CURDATE(), data_fechamento),
+    hora_fechamento = IF(hora_fechamento IS NULL, CURTIME(), hora_fechamento)
+`;
+
+const sql = `
+  UPDATE tickets SET
+    ${camposBase}${isFechado ? camposFechamento : ''}
+  WHERE ticket = ?
+`;
+
 
   db.query(
     sql,
-    [descricao, status, card || null, bug, melhoria, ticket],
+    [descricao, status, card || null, bug, melhoria, impeditivo, ticket],
     (err, resultado) => {
       if (err) {
         console.error('❌ Erro ao atualizar descrição:', err);
@@ -324,6 +331,7 @@ app.post('/atualizar-descricao', (req, res) => {
 
 
 
+
 // limita o carregamento do relatório de 20 em 20
 app.get('/tickets-filtrado', (req, res) => {
   const status = req.query.status;
@@ -331,7 +339,7 @@ app.get('/tickets-filtrado', (req, res) => {
   const offset = parseInt(req.query.offset) || 0;
 
   let sql = `
-    SELECT 
+SELECT 
   t.ticket, 
   t.atendente, 
   t.razao_social, 
@@ -347,7 +355,9 @@ app.get('/tickets-filtrado', (req, res) => {
   t.card,
   t.bug,
   t.melhoria,
+  t.impeditivo,
   CASE TRIM(t.cliente) WHEN '1' THEN '✅' ELSE '❌' END AS cliente
+
 FROM tickets t
 
   `;

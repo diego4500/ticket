@@ -160,6 +160,8 @@ formulario.addEventListener("submit", async (e) => {
     const churnTicket = document.querySelector("#churn_cadastrada")?.value || "";
     const funcionalidadeTicket = document.querySelector("#funcionalidade_cadastrada")?.value || "";
     const sistemasTicket = document.querySelector("#sistemas_cadastrada")?.value || "";
+    const impeditivo = document.getElementById("impeditivo").checked ? 1 : 0;
+
 
 
 
@@ -192,12 +194,14 @@ formulario.addEventListener("submit", async (e) => {
         descricao: descricaoTicket,
         churn: churnTicket,
         funcionalidade: funcionalidadeTicket,
+        impeditivo: impeditivo,
         sistema: sistemasTicket,
         data_abertura: data_abertura,
         hora: horaFormatada,
         ticket: ticket,
         nome_fantasia: nomeFantasia,
-        chamado: chamado
+        chamado: chamado,
+        
     };
 
 
@@ -717,6 +721,10 @@ function funcionalidadeSelecionada() {
                 <option value="aberto">Aberto</option>            
                 <option value="fechado">Fechado</option>
             </select>
+             <div class="check">
+                                    <label for="impeditivo">Impeditivo - marcado = sim - desmarcado = não:</label>
+                                    <input type="checkbox" id="impeditivo">
+                                </div>
         </div> 
     </div>
     <div class="filho">

@@ -116,11 +116,17 @@ const adicionarNaTabela = (dados) => {
               <p><strong>Tipo do card: </strong></p>
              <select id="tipoCard" name="tipo">
                 <option value="">Selecione</option>
-                  <option value="bug"      ${Number(item.bug)      === 1 ? "selected" : ""}>Bug</option>
+                  <option value="bug"      ${Number(item.bug) === 1 ? "selected" : ""}>Bug</option>
                   <option value="melhoria" ${Number(item.melhoria) === 1 ? "selected" : ""}>Melhoria</option>
-              </select>
-
+              </select>   
             </div>
+             <div id="impeditivo_div" style="margin-left: 50px; display: none;">
+                <p><strong>Impeditivo: </strong></p>  
+                <select id="impeditivo" name="impeditivo">                             
+                  <option value="1"      ${Number(item.impeditivo) === 1 ? "selected" : ""}>Sim</option>
+                  <option value="0" ${Number(item.impeditivo) === 0 ? "selected" : ""}>Não</option>
+              </select>
+              </div>
           </div>
       <div style="grid-column: span 2; display: flex; gap: 20px; align-items: center;">
         <p><strong>Razão Social:</strong> ${primeiraMaiuscula(item.razao_social)}</p>
@@ -135,9 +141,20 @@ const adicionarNaTabela = (dados) => {
         <textarea id="descricaoEditavel" rows="5" style="width: 100%; padding-right: 10px; resize: vertical; height: 270px;">${linha.dataset.descricao}</textarea>
       </div>
     `;
+    console.log("🧾 Tipo recebido:", item.impeditivo);
 
-      document.getElementById("conteudoModal").innerHTML = conteudo;
-      document.getElementById("modal").style.display = "flex";
+    // insere o HTML primeiro
+    document.getElementById("conteudoModal").innerHTML = conteudo;
+    document.getElementById("modal").style.display = "flex";
+
+    // só então acessa a div dentro do modal
+    const div = document.getElementById("impeditivo_div");
+    if (div) {
+      div.style.display = ((item.tipo || "").trim().toLowerCase() === "funcionalidade")
+        ? "block"
+        : "none";
+    }
+
     });
 
     colunas.forEach(col => {
@@ -202,25 +219,27 @@ document.getElementById("formEditarDescricao").addEventListener("submit", async 
   const novaDescricao = document.getElementById("descricaoEditavel").value;
   const statusSelect = document.getElementById("statusEditavel");
   const novoStatus = statusSelect.disabled ? "fechado" : statusSelect.value;
-  const cardInput = document.getElementById("numero_card"); 
+  const cardInput = document.getElementById("numero_card");
   const card = cardInput ? cardInput.value : null;
 
   const tipoCardSelect = document.getElementById("tipoCard");
   const tipoSelecionado = tipoCardSelect ? tipoCardSelect.value : "";
+  const impeditivoSelect = document.getElementById("impeditivo");
+const impeditivo = impeditivoSelect ? Number(impeditivoSelect.value) : null;
 
-   // Define valores
-   let bug = 0;
-   let melhoria = 0;
- 
-   if (tipoSelecionado === "bug") {
-     bug = 1;
-   } else if (tipoSelecionado === "melhoria") {
-     melhoria = 1;
-   }
+  // Define valores
+  let bug = 0;
+  let melhoria = 0;
+
+  if (tipoSelecionado === "bug") {
+    bug = 1;
+  } else if (tipoSelecionado === "melhoria") {
+    melhoria = 1;
+  }
 
 
 
-   const resposta = await fetch("/atualizar-descricao", {
+  const resposta = await fetch("/atualizar-descricao", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -229,7 +248,8 @@ document.getElementById("formEditarDescricao").addEventListener("submit", async 
       status: novoStatus,
       card: card,
       bug: bug,
-      melhoria: melhoria
+      melhoria: melhoria,
+      impeditivo: impeditivo 
     })
   });
 
@@ -242,7 +262,7 @@ document.getElementById("formEditarDescricao").addEventListener("submit", async 
       if (linha.dataset.ticket === ticketAtual) {
         linha.dataset.descricao = dados.descricao || "";
         linha.dataset.cliente = dados.cliente;
-        
+
 
         colunas.forEach((col, idx) => {
           const celula = linha.cells[idx];
@@ -274,8 +294,8 @@ document.getElementById("formEditarDescricao").addEventListener("submit", async 
             celula.textContent = (dados[col] === null || dados[col] === undefined || dados[col] === '') ? '-' : dados[col];
           }
         });
-// teste
-
+        // teste
+/*
         const conteudoAtualizado = `
           <div>
             <p><strong>Ticket:</strong> ${dados.ticket}</p>
@@ -309,10 +329,17 @@ document.getElementById("formEditarDescricao").addEventListener("submit", async 
               <p><strong>Tipo do card: </strong></p>
               <select id="tipoCard" name="tipo">
                 <option value="">Selecione</option>
-                <option value="bug"      ${Number(item.bug)      === 1 ? "selected" : ""}>Bug</option>
+                <option value="bug"      ${Number(item.bug) === 1 ? "selected" : ""}>Bug</option>
 <option value="melhoria" ${Number(item.melhoria) === 1 ? "selected" : ""}>Melhoria</option>
               </select>
             </div>
+            <div id="impeditivo_div" style="margin-left: 50px; display: none;">
+                <p><strong>Impeditivo: </strong></p>  
+                <select id="tipoCard" name="impeditivo">                             
+                  <option value="sim"      ${Number(item.impeditivo) === 1 ? "selected" : ""}>Sim</option>
+                  <option value="não" ${Number(item.impeditivo) === 0 ? "selected" : ""}>Não</option>
+              </select>
+              </div>
           </div>
           <div style="grid-column: span 2; display: flex; gap: 20px; align-items: center;">
             <p><strong>Razão Social:</strong> ${primeiraMaiuscula(dados.razao_social)}</p>
@@ -326,15 +353,23 @@ document.getElementById("formEditarDescricao").addEventListener("submit", async 
             <textarea id="descricaoEditavel" rows="5" style="width: 100%; padding-right: 10px; resize: vertical; height: 270px;">${dados.descricao}</textarea>
           </div>
         `;
+        
 
-        document.getElementById("conteudoModal").innerHTML = conteudoAtualizado;
+        console.log("🧾 Tipo recebido:", item.tipo);
 
-        const statusAtualizado = document.getElementById("statusEditavel");
-        if (statusAtualizado && dados.status === "fechado") {
-          statusAtualizado.disabled = true;
-        }
-
+        // insere o HTML primeiro
+        document.getElementById("conteudoModal").innerHTML = conteudo;
         document.getElementById("modal").style.display = "flex";
+
+        // só então acessa a div dentro do modal
+        const div = document.getElementById("impeditivo_div");
+        if (div) {
+          div.style.display = ((item.tipo || "").trim().toLowerCase() === "funcionalidade")
+            ? "block"
+            : "none";
+        }
+            */
+
         break;
       }
     }
@@ -411,7 +446,7 @@ function ativarBotaoSalvarEdicao() {
   const botao = document.getElementById("salvarEdicao");
   if (botao) {
     botao.disabled = false;
-    botao.style.pointerEvents = "auto";  
+    botao.style.pointerEvents = "auto";
     botao.style.color = "white";
     botao.style.border = "none";
     botao.style.borderRadius = "5px";
@@ -476,6 +511,7 @@ document.addEventListener("input", function (event) {
   if (
     (id === "descricaoEditavel") ||
     (id === "numero_card" && value.trim().length > 0) ||
+    (id === "impeditivo" && value.trim().length > 0) ||
     (id === "tipoCard" && value.trim() !== "")
   ) {
     ativarBotaoSalvarEdicao();
