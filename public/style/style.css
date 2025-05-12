@@ -234,8 +234,7 @@ body {
 
 .buscar{
   width: 287px;
-  margin-top: 26px;
-  margin-left: 28px;
+ 
   display: flex;
 }
 
@@ -1484,7 +1483,7 @@ canvas {
 }
 
 .tabela-titulo{
-  width: 250px;
+  width: 170px;
 }
 
 @keyframes luz-pulsante {
