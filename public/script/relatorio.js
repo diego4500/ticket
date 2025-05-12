@@ -29,7 +29,7 @@ const criarCabecalho = () => {
   tabelaContainer.innerHTML = "";
   tabelaContainer.appendChild(tabela);
 };
-
+/*
 const carregarTicketsFiltrado = async () => {
   try {
     let url = `/tickets-filtrado?offset=${offset}&limite=${limite}`;
@@ -58,6 +58,7 @@ const carregarTicketsFiltrado = async () => {
     console.error("Erro ao carregar tickets filtrados:", err);
   }
 };
+*/
 
 const adicionarNaTabela = (dados) => {
   console.log("📦 dados recebidos:", dados.map(d => ({

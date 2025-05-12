@@ -1477,10 +1477,14 @@ canvas {
 }
 
 .razao-social {
-  max-width: 400px;        /* ajuste conforme necessário */
+  max-width: 350px;        /* ajuste conforme necessário */
   white-space: nowrap;     /* impede quebra de linha */
   overflow: hidden;        /* esconde o que passar */
   text-overflow: ellipsis; /* adiciona os ... */
+}
+
+.tabela-titulo{
+  width: 250px;
 }
 
 @keyframes luz-pulsante {

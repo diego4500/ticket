@@ -159,6 +159,65 @@ console.log("Total de valores:", valores.length);
   });
 });
 
+// rota buscar ticket
+
+app.get('/buscar-ticket', autenticado, (req, res) => {
+  const termo = (req.query.termo || "").toLowerCase().trim();
+  const valorLike = `%${termo}%`;
+
+  const offset = parseInt(req.query.offset) || 0;
+  const limite = parseInt(req.query.limite) || 50;
+
+  let query = `
+    SELECT * FROM tickets
+    WHERE 
+      ticket = ? OR
+      razao_social LIKE ? OR
+      nome_fantasia LIKE ? OR
+      cnpj LIKE ? OR
+      status LIKE ? OR
+      tipo LIKE ? OR
+      menu_duvida LIKE ? OR
+      churn LIKE ? OR
+      funcionalidade LIKE ? OR
+      atendente LIKE ? OR
+      card LIKE ?
+  `;
+
+  const valores = [
+    termo,
+    valorLike, valorLike, valorLike,
+    valorLike, valorLike, valorLike,
+    valorLike, valorLike,
+    valorLike, valorLike
+  ];
+
+  if (termo === "bug") {
+    query += ` OR bug = 1`;
+  } else if (termo === "melhoria") {
+    query += ` OR melhoria = 1`;
+  } else if (termo === "impeditivo") {
+    query += ` OR impeditivo = 1`;
+  }
+
+  query += ` ORDER BY id DESC LIMIT ? OFFSET ?`;
+  valores.push(limite, offset);
+
+  db.query(query, valores, (err, resultados) => {
+    if (err) {
+      console.error("Erro na busca:", err);
+      return res.status(500).json([]);
+    }
+
+    res.json(resultados);
+  });
+});
+
+
+
+
+
+
 
 
 
@@ -330,7 +389,7 @@ const sql = `
 });
 
 
-
+/*
 
 // limita o carregamento do relatório de 20 em 20
 app.get('/tickets-filtrado', (req, res) => {
@@ -382,7 +441,7 @@ FROM tickets t
   });
 });
 
-
+*/
 
 
 
