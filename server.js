@@ -162,43 +162,46 @@ console.log("Total de valores:", valores.length);
 // rota buscar ticket
 
 app.get('/buscar-ticket', autenticado, (req, res) => {
-  const termo = (req.query.termo || "").toLowerCase().trim();
-  const valorLike = `%${termo}%`;
+  const termos = (req.query.termo || "")
+    .toLowerCase()
+    .split(",")
+    .map(t => t.trim())
+    .filter(t => t.length > 0);
 
   const offset = parseInt(req.query.offset) || 0;
   const limite = parseInt(req.query.limite) || 50;
 
-  let query = `
-    SELECT * FROM tickets
-    WHERE 
-      ticket = ? OR
-      razao_social LIKE ? OR
-      nome_fantasia LIKE ? OR
-      cnpj LIKE ? OR
-      status LIKE ? OR
-      tipo LIKE ? OR
-      menu_duvida LIKE ? OR
-      churn LIKE ? OR
-      funcionalidade LIKE ? OR
-      atendente LIKE ? OR
-      card LIKE ?
-  `;
+  let query = `SELECT * FROM tickets WHERE 1=1`;
+  let valores = [];
 
-  const valores = [
-    termo,
-    valorLike, valorLike, valorLike,
-    valorLike, valorLike, valorLike,
-    valorLike, valorLike,
-    valorLike, valorLike
-  ];
-
-  if (termo === "bug") {
-    query += ` OR bug = 1`;
-  } else if (termo === "melhoria") {
-    query += ` OR melhoria = 1`;
-  } else if (termo === "impeditivo") {
-    query += ` OR impeditivo = 1`;
-  }
+  termos.forEach(termo => {
+    const like = `%${termo}%`;
+    query += `
+      AND (
+        ticket = ? OR
+        razao_social LIKE ? OR
+        nome_fantasia LIKE ? OR
+        cnpj LIKE ? OR
+        status LIKE ? OR
+        tipo LIKE ? OR
+        menu_duvida LIKE ? OR
+        churn LIKE ? OR
+        funcionalidade LIKE ? OR
+        atendente LIKE ? OR
+        card LIKE ?
+        ${termo === "bug"        ? "OR bug = 1"        : ""}
+        ${termo === "melhoria"   ? "OR melhoria = 1"   : ""}
+        ${termo === "impeditivo" ? "OR impeditivo = 1" : ""}
+      )
+    `;
+    valores.push(
+      termo,
+      like, like, like,
+      like, like, like,
+      like, like,
+      like, like
+    );
+  });
 
   query += ` ORDER BY id DESC LIMIT ? OFFSET ?`;
   valores.push(limite, offset);
@@ -212,6 +215,7 @@ app.get('/buscar-ticket', autenticado, (req, res) => {
     res.json(resultados);
   });
 });
+
 
 
 
