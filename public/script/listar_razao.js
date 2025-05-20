@@ -80,7 +80,7 @@ async function carregarTabelaRazoesSociais(reset = false) {
 if (item.cliente == 1 && vencimento < hoje) {
         linha.innerHTML = `
         <td style=" background:rgb(252, 219, 219); padding: 10px; max-width: 300px !important; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap;">${item.razao_social}</td>
-        <td style="background:rgb(252, 219, 219); padding: 10px; max-width: 180x; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">${item.nome_fantasia || '-'}</td>
+        <td style="background:rgb(252, 219, 219); padding: 10px; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">${item.nome_fantasia || '-'}</td>
         <td style="background:rgb(252, 219, 219); text-align: center; padding: 10px;">${formatarCNPJ(item.cnpj)}</td>
         <td style="background:rgb(252, 219, 219); text-align: center; padding: 10px;">${item.cliente == 1 ? '✅' : '❌'}</td>
         <td style="background:rgb(252, 219, 219); text-align: center; padding: 10px;">${item.data_cliente || '-'}</td>
@@ -541,7 +541,7 @@ async function buscarRazaoSocialOuCNPJ(reset = false) {
 
       linha.innerHTML = `
         <td style="padding: 10px; max-width: 400px !important; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap;">${item.razao_social}</td>
-        <td style="padding: 10px;">${item.nome_fantasia || '-'}</td>
+        <td style="padding: 10px; text-overflow: ellipsis;">${item.nome_fantasia || '-'}</td>
         <td style="text-align: center; padding: 10px;">${formatarCNPJ(item.cnpj)}</td>
         <td style="text-align: center; padding: 10px;">${item.cliente == 1 ? '✅' : '❌'}</td>
         <td style="text-align: center; padding: 10px;">${item.data_cliente || '-'}</td>
