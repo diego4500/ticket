@@ -238,6 +238,15 @@ body {
   display: flex;
 }
 
+/* style.css */
+.nome-fantasia {
+  max-width: 180px;          /* ajuste como preferir              */
+  white-space: nowrap;       /* impede a quebra de linha          */
+  overflow: hidden;          /* esconde o excesso                 */
+  text-overflow: ellipsis;   /* coloca “…” no fim do que sobrar   */
+}
+
+
 .lupa{
   font-size: 28px;
   margin-left: 12px;

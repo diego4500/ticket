@@ -341,13 +341,7 @@ if (checkboxCliente.checked) {
 }
 
 
-      if (dados.cliente == 1) {
-        document.getElementById('clienteB').disabled = true;
-        document.getElementById('data_cliente').disabled = true;
-      } else {       
-        document.getElementById('clienteB').disabled = false;
-        document.getElementById('data_cliente').disabled = false;
-      }
+ 
         // inicio - Habilita ou desabilita o botao do chat
       const chatA = document.getElementById('chatA');
       const chatB = document.getElementById('chatB');
