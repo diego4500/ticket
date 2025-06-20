@@ -2944,6 +2944,28 @@ app.get('/churns-mes', (req, res) => {
   });
 });
 
+// contagem dashboard pagamento em atraso
+
+// Conta quantos clientes estão com data_vencimento vencida (D+1)
+app.get("/clientes-em-atraso", (req, res) => {
+  const sql = `
+    SELECT COUNT(*) AS total
+    FROM razao_social
+    WHERE cliente = 1                      -- só conta quem é cliente
+      AND data_vencimento IS NOT NULL
+      AND DATEDIFF(CURDATE(), data_vencimento) >= 1  -- passou do dia
+  `;
+
+  db.query(sql, (err, rows) => {
+    if (err) {
+      console.error("Erro ao buscar clientes em atraso:", err);
+      return res.status(500).json({ erro: "Erro ao buscar clientes em atraso" });
+    }
+    res.json({ total: rows[0].total });
+  });
+});
+
+
 
 
 

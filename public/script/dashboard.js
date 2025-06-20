@@ -227,6 +227,24 @@ async function desenharGraficoClientesAtivos() {
     }
   }
 
+  // script/dashboard.js
+async function carregarClientesEmAtraso() {
+  try {
+    const resp = await fetch("/clientes-em-atraso");
+    const { total } = await resp.json();
+    document.getElementById("clienteAtraso").textContent = total;
+  } catch (e) {
+    console.error("Falha ao buscar clientes em atraso:", e);
+  }
+}
+
+// primeira carga + refresh a cada 10 min (opcional)
+document.addEventListener("DOMContentLoaded", () => {
+  carregarClientesEmAtraso();
+  setInterval(carregarClientesEmAtraso, 10 * 60 * 1000);
+});
+
+
   function atualizarDashboard() {
     buscarEDesenharGrafico();
     desenharGraficoClientesAtivos();
@@ -234,6 +252,7 @@ async function desenharGraficoClientesAtivos() {
     carregarTicketsAbertosCassio();
     carregarClientesDoMes();
     carregarChurnsDoMes();
+    carregarClientesEmAtraso();
   }
   
   document.addEventListener("DOMContentLoaded", () => {
