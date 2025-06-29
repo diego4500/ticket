@@ -234,6 +234,7 @@ body {
 
 .buscar{
   width: 287px;
+  margin: 20px 0px 0px 26px;
  
   display: flex;
 }
