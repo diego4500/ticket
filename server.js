@@ -782,7 +782,7 @@ app.get('/exportar-excel-razao-social', autenticado, async (req, res) => {
             let cnpj = row[col.key].toString().replace(/\D/g, '').padStart(14, '0');
             novo[col.key] = `${cnpj.substring(0,2)}.${cnpj.substring(2,5)}.${cnpj.substring(5,8)}/${cnpj.substring(8,12)}-${cnpj.substring(12,14)}`;
           } else if (col.key === "cliente") {
-            novo[col.key] = row[col.key] === 1 ? "Sim" : "Não";
+            novo[col.key] = row[col.key] == 1 ? "Sim" : "Não";
           } else {
             novo[col.key] = row[col.key];
           }
