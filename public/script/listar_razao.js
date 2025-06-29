@@ -83,8 +83,8 @@ if (item.cliente == 1 && vencimento < hoje) {
         <td style="background:rgb(252, 219, 219); padding: 10px; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">${item.nome_fantasia || '-'}</td>
         <td style="background:rgb(252, 219, 219); text-align: center; padding: 10px;">${formatarCNPJ(item.cnpj)}</td>
         <td style="background:rgb(252, 219, 219); text-align: center; padding: 10px;">${item.cliente == 1 ? '✅' : '❌'}</td>
-        <td style="background:rgb(252, 219, 219); text-align: center; padding: 10px;">${item.data_cliente || '-'}</td>
-        <td style="background:rgb(252, 219, 219); text-align: center; padding: 10px;">${item.data_vencimento || '-'}</td>
+        <td style="background:rgb(252, 219, 219); text-align: center; padding: 10px;">${formatarDataBR(item.data_cliente) || '-'}</td>
+        <td style="background:rgb(252, 219, 219); text-align: center; padding: 10px;">${formatarDataBR(item.data_vencimento) || '-'}</td>
         <td style="background:rgb(252, 219, 219); text-align: center; padding: 10px;">${item.sem_acesso || '-'}</td>
         <td style="background:rgb(252, 219, 219); text-align: center; padding: 10px;">${item.faturamento || '-'}</td>
       `;
@@ -96,8 +96,8 @@ if (item.cliente == 1 && vencimento < hoje) {
         <td style="padding: 10px; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">${item.nome_fantasia || '-'}</td>
         <td style="text-align: center; padding: 10px;">${formatarCNPJ(item.cnpj)}</td>
         <td style="text-align: center; padding: 10px;">${item.cliente == 1 ? '✅' : '❌'}</td>
-        <td style="text-align: center; padding: 10px;">${item.data_cliente || '-'}</td>
-        <td style="text-align: center; padding: 10px;">${item.data_vencimento || '-'}</td>
+        <td style="text-align: center; padding: 10px;">${formatarDataBR(item.data_cliente) || '-'}</td>
+        <td style="text-align: center; padding: 10px;">${formatarDataBR(item.data_vencimento) || '-'}</td>
         <td style="text-align: center; padding: 10px;">${item.sem_acesso || '-'}</td>
           <td style="text-align: center; padding: 10px;">${item.faturamento || '-'}</td>
       `;
@@ -479,13 +479,15 @@ async function buscarRazaoSocialOuCNPJ(reset = false) {
   }
 
   try {
+    const ordenarPor = document.getElementById('ordenarPor').value;
+  const direcao = document.getElementById('direcao').value;
     let url;
-    if (termo === "") {
-      url = `/listar-razao-social?pagina=${paginaBusca}&limite=${limiteBusca}`;
-    } else {
-      let termoBusca = /^\d+$/.test(termo) ? termo.replace(/\D/g, '') : termo;
-      url = `/buscar-razao-social?termo=${encodeURIComponent(termoBusca)}&pagina=${paginaBusca}&limite=${limiteBusca}`;
-    }
+if (termo === "") {
+  url = `/listar-razao-social?pagina=${paginaBusca}&limite=${limiteBusca}&ordenarPor=${ordenarPor}&direcao=${direcao}`;
+} else {
+  let termoBusca = /^\d+$/.test(termo) ? termo.replace(/\D/g, '') : termo;
+  url = `/buscar-razao-social?termo=${termoBusca}&pagina=${paginaAtual}&limite=50&ordenarPor=${ordenarPor}&direcao=${direcao}`;
+}
 
     const resposta = await fetch(url);
     if (!resposta.ok) throw new Error('Erro ao buscar dados.');
@@ -516,6 +518,8 @@ async function buscarRazaoSocialOuCNPJ(reset = false) {
             <th style="padding: 10px;">Cliente</th>
             <th style="padding: 10px;">Data Cliente</th>
             <th style="padding: 10px;">Vence em:</th>
+            <th style="padding: 10px;">Dias Sem Acesso:</th>
+            <th style="padding: 10px;">Faturamento:</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -525,6 +529,7 @@ async function buscarRazaoSocialOuCNPJ(reset = false) {
     }
 
     const tbody = tabela.querySelector('tbody');
+    console.log(dados)
 
     dados.forEach(item => {
       const linha = document.createElement('tr');
@@ -533,14 +538,37 @@ async function buscarRazaoSocialOuCNPJ(reset = false) {
       linha.style.borderBottom = '1px solid #eee';
       linha.style.cursor = 'pointer';
 
-      linha.innerHTML = `
-        <td style="padding: 10px; max-width: 400px !important; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap;">${item.razao_social}</td>
-        <td style="padding: 10px; text-overflow: ellipsis;">${item.nome_fantasia || '-'}</td>
+      const hoje = new Date().toISOString().split("T")[0]; // '2025-04-29'
+      const vencimento = item.data_vencimento;
+      console.log(`hoje ${hoje}`)
+      console.log(`vencimento ${vencimento}`)
+
+     if (item.cliente == 1 && vencimento < hoje) {
+        linha.innerHTML = `
+        <td style=" background:rgb(252, 219, 219); padding: 10px; max-width: 300px !important; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap;">${item.razao_social}</td>
+        <td style="background:rgb(252, 219, 219); padding: 10px; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">${item.nome_fantasia || '-'}</td>
+        <td style="background:rgb(252, 219, 219); text-align: center; padding: 10px;">${formatarCNPJ(item.cnpj)}</td>
+        <td style="background:rgb(252, 219, 219); text-align: center; padding: 10px;">${item.cliente == 1 ? '✅' : '❌'}</td>
+        <td style="background:rgb(252, 219, 219); text-align: center; padding: 10px;">${item.data_cliente || '-'}</td>
+        <td style="background:rgb(252, 219, 219); text-align: center; padding: 10px;">${item.data_vencimento || '-'}</td>
+        <td style="background:rgb(252, 219, 219); text-align: center; padding: 10px;">${item.sem_acesso || '-'}</td>
+        <td style="background:rgb(252, 219, 219); text-align: center; padding: 10px;">${item.faturamento || '-'}</td>
+      `;
+
+      }
+      else{
+        linha.innerHTML = `
+        <td style="padding: 10px; max-width: 300px !important; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap;">${item.razao_social}</td>
+        <td style="padding: 10px; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">${item.nome_fantasia || '-'}</td>
         <td style="text-align: center; padding: 10px;">${formatarCNPJ(item.cnpj)}</td>
         <td style="text-align: center; padding: 10px;">${item.cliente == 1 ? '✅' : '❌'}</td>
         <td style="text-align: center; padding: 10px;">${item.data_cliente || '-'}</td>
         <td style="text-align: center; padding: 10px;">${item.data_vencimento || '-'}</td>
+        <td style="text-align: center; padding: 10px;">${item.sem_acesso || '-'}</td>
+          <td style="text-align: center; padding: 10px;">${item.faturamento || '-'}</td>
       `;
+
+      }
 
       linha.addEventListener('click', () => {
         const razao = decodeURIComponent(linha.getAttribute('data-razao'));
@@ -588,6 +616,13 @@ document.getElementById('botaoCarregarMais').addEventListener('click', () => {
       return cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
     }
   });
+
+  function formatarDataBR(dataISO) {
+  if (!dataISO) return '-';
+  const [ano, mes, dia] = dataISO.split('-');
+  return `${dia}/${mes}/${ano}`;
+}
+
   
   
  

@@ -188,6 +188,7 @@ app.get('/buscar-ticket', autenticado, (req, res) => {
         churn LIKE ? OR
         funcionalidade LIKE ? OR
         atendente LIKE ? OR
+        criticidade LIKE ? OR
         card LIKE ?
         ${termo === "bug"        ? "OR bug = 1"        : ""}
         ${termo === "melhoria"   ? "OR melhoria = 1"   : ""}
@@ -199,7 +200,7 @@ app.get('/buscar-ticket', autenticado, (req, res) => {
       like, like, like,
       like, like, like,
       like, like,
-      like, like
+      like, like, like
     );
   });
 
@@ -343,7 +344,23 @@ app.get('/tickets', (req, res) => {
 // Rota modal adicionar descrição
 
 app.post('/atualizar-descricao', (req, res) => {
-  let { ticket, descricao, status, card, bug = 0, melhoria = 0, impeditivo = null } = req.body;
+  console.log("📦 Corpo recebido:", req.body);
+
+
+ let {
+  ticket,
+  descricao,
+  status,
+  card,
+  bug = 0,
+  melhoria = 0,
+  impeditivo = null,
+  criticidade = null // ⬅️ Verifique se isso EXISTE
+} = req.body;
+
+ console.log("🔍 Criticidade recebida:", criticidade);
+
+
 
   if (bug == 1) {
     bug = 1;
@@ -358,14 +375,16 @@ app.post('/atualizar-descricao', (req, res) => {
 
   const isFechado = status.toLowerCase() === 'fechado';
 
-  const camposBase = `
+const camposBase = `
   descricao       = ?,
   status          = ?,
   card            = ?,
   bug             = ?,
   melhoria        = ?,
-  impeditivo      = ?
+  impeditivo      = ?,
+  criticidade     = ?
 `;
+
 
 const camposFechamento = `
   , data_fechamento = IF(data_fechamento IS NULL, CURDATE(), data_fechamento),
@@ -381,7 +400,8 @@ const sql = `
 
   db.query(
     sql,
-    [descricao, status, card || null, bug, melhoria, impeditivo, ticket],
+    [descricao, status, card || null, bug, melhoria, impeditivo, criticidade, ticket],
+
     (err, resultado) => {
       if (err) {
         console.error('❌ Erro ao atualizar descrição:', err);
@@ -539,7 +559,8 @@ app.get('/exportar-excel', autenticado, async (req, res) => {
         card: item.card ?? '',
         bug: item.bug === 1 ? "É Bug" : '',
         melhoria: item.melhoria === 1 ? "É Melhoria" : '',
-        impeditivo: item.impeditivo === 1 ? "Sim" : "Não" // ✅ Nova regra para impedimento
+        impeditivo: item.impeditivo === 1 ? "Sim" : "Não",
+        criticidade: item.criticidade ?? ''
       }));
 
       const workbook = new ExcelJS.Workbook();
@@ -695,6 +716,112 @@ app.get('/exportar-excel-funcionalidade', autenticado, async (req, res) => {
     res.status(500).send("Erro ao exportar Excel de funcionalidades.");
   }
 });
+
+
+
+app.get('/exportar-excel-razao-social', autenticado, async (req, res) => {
+  try {
+    const query = `
+      SELECT 
+        razao_social,
+        nome_fantasia,
+        cnpj,
+        criado_em,
+        cliente,
+        data_cliente,
+        data_churn,
+        observacao,
+        dia_vencimento,
+        data_vencimento,
+        qt_licenca,
+        sem_acesso,
+        faturamento
+      FROM razao_social
+      ORDER BY razao_social ASC
+    `;
+
+    db.query(query, async (err, results) => {
+      if (err) {
+        console.error("Erro ao buscar dados:", err);
+        return res.status(500).send("Erro ao gerar relatório de razão social.");
+      }
+
+      const workbook = new ExcelJS.Workbook();
+      const sheet = workbook.addWorksheet("Razão Social");
+
+      // Define os cabeçalhos na ordem desejada
+      const campos = [
+      
+        { key: "razao_social", header: "Razão Social" },
+        { key: "nome_fantasia", header: "Nome Fantasia" },
+        { key: "cnpj", header: "CNPJ" },
+        { key: "criado_em", header: "Criado em" },
+        { key: "cliente", header: "Cliente" },
+        { key: "data_cliente", header: "Data Cliente" },
+        { key: "data_churn", header: "Data Churn" },
+        { key: "observacao", header: "Observação" },
+        { key: "dia_vencimento", header: "Dia Vencimento" },
+        { key: "data_vencimento", header: "Data Vencimento" },
+        { key: "qt_licenca", header: "Qtd Licença" },
+        { key: "sem_acesso", header: "Sem Acesso" },
+        { key: "faturamento", header: "Faturamento" },
+      ];
+
+      sheet.columns = campos.map(col => ({
+        header: col.header,
+        key: col.key,
+        width: 20 // tamanho inicial (será ajustado abaixo)
+      }));
+
+      // Adiciona dados tratados (exemplo: CNPJ formatado)
+      const dadosTratados = results.map(row => {
+        const novo = {};
+        campos.forEach(col => {
+          if (col.key === "cnpj" && row[col.key]) {
+            // formatação básica do CNPJ
+            let cnpj = row[col.key].toString().replace(/\D/g, '').padStart(14, '0');
+            novo[col.key] = `${cnpj.substring(0,2)}.${cnpj.substring(2,5)}.${cnpj.substring(5,8)}/${cnpj.substring(8,12)}-${cnpj.substring(12,14)}`;
+          } else if (col.key === "cliente") {
+            novo[col.key] = row[col.key] === 1 ? "Sim" : "Não";
+          } else {
+            novo[col.key] = row[col.key];
+          }
+        });
+        return novo;
+      });
+
+      sheet.addRows(dadosTratados);
+
+      // Ajusta a largura de cada coluna
+      sheet.columns.forEach(column => {
+        let maxLength = column.header.length;
+        column.eachCell({ includeEmpty: true }, cell => {
+          const cellLength = cell.value ? cell.value.toString().length : 0;
+          if (cellLength > maxLength) maxLength = cellLength;
+        });
+        column.width = Math.min(maxLength + 2, 40);
+      });
+
+      // Congela a primeira linha e a coluna A
+      sheet.views = [{ state: 'frozen', xSplit: 1, ySplit: 1 }];
+
+      // Filtros automáticos em todas as colunas
+      sheet.autoFilter = {
+        from: 'A1',
+        to: String.fromCharCode(64 + campos.length) + '1' // Ex: 'N1' para 14 colunas
+      };
+
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename=relatorio_razao_social.xlsx');
+      await workbook.xlsx.write(res);
+      res.end();
+    });
+  } catch (error) {
+    console.error("Erro:", error);
+    res.status(500).send("Erro ao exportar Excel de razão social.");
+  }
+});
+
 
 
 
@@ -2300,11 +2427,20 @@ app.get('/buscar-razao-social', (req, res) => {
   const limite = parseInt(req.query.limite) || 50;
   const offset = (pagina - 1) * limite;
 
+  // NOVO: captura os parâmetros de ordenação
+  const ordenarPor = req.query.ordenarPor || 'razao_social';
+  const direcao = req.query.direcao === 'DESC' ? 'DESC' : 'ASC';
+
+  // Segurança: define colunas permitidas para evitar SQL injection
+  const colunasPermitidas = ['razao_social', 'data_vencimento', 'sem_acesso', 'faturamento'];
+
+  const colunaOrdenacao = colunasPermitidas.includes(ordenarPor) ? ordenarPor : 'razao_social';
+
   const sql = `
-    SELECT DISTINCT razao_social, nome_fantasia, cnpj, cliente, DATE_FORMAT(data_cliente, '%Y-%m-%d') AS data_cliente
+    SELECT DISTINCT razao_social, nome_fantasia, cnpj, cliente, DATE_FORMAT(data_cliente, '%Y-%m-%d') AS data_cliente, data_vencimento, sem_acesso, faturamento
     FROM razao_social
     WHERE razao_social LIKE ? OR cnpj LIKE ?
-    ORDER BY razao_social ASC
+    ORDER BY ${colunaOrdenacao} ${direcao}
     LIMIT ? OFFSET ?
   `;
 
@@ -2318,6 +2454,7 @@ app.get('/buscar-razao-social', (req, res) => {
     res.json(resultados);
   });
 });
+
 
 
 

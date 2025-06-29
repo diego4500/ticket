@@ -209,6 +209,19 @@ function abrirModal(item){
         </select>
       </div>
 
+       <div class="item">
+        <strong>Criticidade:</strong>
+     <select id="criticidade" name="criticidade">
+  <option value="">Selecione</option>
+  <option value="baixa" ${item.criticidade === "baixa" ? "selected" : ""}>Baixa</option>
+  <option value="media" ${item.criticidade === "media" ? "selected" : ""}>Média</option>
+  <option value="alta" ${item.criticidade === "alta" ? "selected" : ""}>Alta</option>
+  <option value="urgente" ${item.criticidade === "urgente" ? "selected" : ""}>Urgente</option>
+</select>
+
+      </div>
+
+
       <div class="item">
         <div class="impeditivo_div">
             <strong>Impeditivo:</strong>
@@ -268,37 +281,42 @@ function fecharModal(){ modal.style.display = "none"; }
 btnSalvarModal.addEventListener("click", async e=>{
   e.preventDefault();
 
-  const payload = {
-    ticket    : ticketEmEdicao,
-    descricao : document.getElementById("descricaoEditavel").value,
-    status    : document.getElementById("statusEditavel").value,
-    card      : document.getElementById("numero_card").value || null,
-    bug       : 0, melhoria:0, impeditivo:null
-  };
-  const tCard = document.getElementById("tipoCard");
-  const imp   = document.getElementById("impeditivo");
-  if (tCard){
-    if (tCard.value === "bug")      payload.bug      = 1;
-    if (tCard.value === "melhoria") payload.melhoria = 1;
-  }
-  if (imp) payload.impeditivo = Number(imp.value);
+ const payload = {
+  ticket    : ticketEmEdicao,
+  descricao : document.getElementById("descricaoEditavel").value,
+  status    : document.getElementById("statusEditavel").value,
+  card      : document.getElementById("numero_card").value || null,
+  bug       : 0, melhoria: 0, impeditivo: null
+};
 
-  try{
-    const r = await fetch("/atualizar-descricao",{
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify(payload)
-    });
-    if(!r.ok) throw new Error("Falha no servidor");
-    alert("Ticket atualizado!");
-    fecharModal();
-    paginaAtual = 1;
-    buscarTickets();
-  }catch(err){
-    console.error(err);
-    alert("Não foi possível salvar.");
-  }
-  travarSalvar();
+const tCard = document.getElementById("tipoCard");
+const imp   = document.getElementById("impeditivo");
+const criticidadeEl = document.getElementById("criticidade");
+
+if (tCard) {
+  if (tCard.value === "bug")      payload.bug = 1;
+  if (tCard.value === "melhoria") payload.melhoria = 1;
+}
+if (imp) payload.impeditivo = Number(imp.value);
+if (criticidadeEl) payload.criticidade = criticidadeEl.value;
+
+try {
+  const r = await fetch("/atualizar-descricao", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  if (!r.ok) throw new Error("Falha no servidor");
+  alert("Ticket atualizado!");
+  fecharModal();
+  paginaAtual = 1;
+  buscarTickets();
+} catch (err) {
+  console.error(err);
+  alert("Não foi possível salvar.");
+}
+travarSalvar();
+
 });
 
 /* ------------------------------------------------------------------ */
@@ -307,7 +325,7 @@ buscarTickets();
 /* ====================== EXPORTAR EXCEL ============================ */
 document.getElementById("exportar_excelB").addEventListener("change", e=>{
   const map={
-    todos:"exportar-excel", duvidas:"exportar-excel-duvidas",
+    todos:"exportar-excel", razao_social:"exportar-excel-razao-social", duvidas:"exportar-excel-duvidas",
     funcionalidades:"exportar-excel-funcionalidade", churn:"exportar-excel-churn",
     cliente_churn:"exportar-excel-cliente-churn", sistema:"exportar-excel-sistema",
     apresentacao:"exportar-excel-apresentacao"

@@ -12,7 +12,7 @@ let statusFiltro = null;
 let ticketAtual = null;
 
 const colunas = [
-  "ticket", "atendente", "razao_social", "tipo", "titulo", "cliente", "status", "data_abertura", "data_fechamento", "chamado"];
+  "ticket", "atendente", "razao_social", "tipo", "criticidade", "titulo", "cliente", "status", "data_abertura", "data_fechamento", "chamado"];
 
 
 
@@ -121,6 +121,20 @@ const adicionarNaTabela = (dados) => {
                   <option value="melhoria" ${Number(item.melhoria) === 1 ? "selected" : ""}>Melhoria</option>
               </select>   
             </div>
+
+               <div>
+              <p><strong>Tipo do card: </strong></p>
+             <select id="criticidade" name="criticidade">
+                <option value="">Selecione</option>
+                  <option value="baixa"      ${Number(item.bug) === 1 ? "selected" : ""}>Bug</option>
+                  <option value="media" ${Number(item.melhoria) === 1 ? "selected" : ""}>Melhoria</option>
+                  <option value="alta" ${Number(item.melhoria) === 1 ? "selected" : ""}>Melhoria</option>
+                  <option value="urgente" ${Number(item.melhoria) === 1 ? "selected" : ""}>Melhoria</option>
+              </select>   
+            </div>
+
+         
+
              <div id="impeditivo_div" style="margin-left: 50px; display: none;">
                 <p><strong>Impeditivo: </strong></p>  
                 <select id="impeditivo" name="impeditivo">                             
@@ -227,6 +241,8 @@ document.getElementById("formEditarDescricao").addEventListener("submit", async 
   const tipoSelecionado = tipoCardSelect ? tipoCardSelect.value : "";
   const impeditivoSelect = document.getElementById("impeditivo");
 const impeditivo = impeditivoSelect ? Number(impeditivoSelect.value) : null;
+const criticidadeSelect = document.getElementById("criticidade");
+const criticidade = criticidadeSelect ? criticidadeSelect.value : "";
 
   // Define valores
   let bug = 0;
@@ -250,7 +266,8 @@ const impeditivo = impeditivoSelect ? Number(impeditivoSelect.value) : null;
       card: card,
       bug: bug,
       melhoria: melhoria,
-      impeditivo: impeditivo 
+      impeditivo: impeditivo, 
+      criticidade: criticidade
     })
   });
 
@@ -398,6 +415,7 @@ exportarExcel.addEventListener("change", async (event) => {
 
   switch (valorSelecionado) {
     case "todos": url = "exportar-excel"; break;
+    case "razao_social": url = "exportar-excel-razao-social"; break;
     case "duvidas": url = "exportar-excel-duvidas"; break;
     case "funcionalidades": url = "exportar-excel-funcionalidade"; break;
     case "churn": url = "exportar-excel-churn"; break;
