@@ -49,7 +49,9 @@ async function buscarTickets(pagina = 1) {
 
   try {
     const resp   = await fetch(`/buscar-ticket?termo=${encodeURIComponent(termo)}&offset=${offset}&limite=${limitePorPagina}`);
+    
     const dados  = await resp.json();
+    
     ultimoLote   = dados.length;
 
     if (pagina === 1) {
@@ -79,9 +81,16 @@ function criarEstruturaTabela() {
     <table class="tabela-relatorio">
       <thead>
         <tr>
-          <th>Ticket</th><th>Atendente</th><th>Razão Social</th><th>Tipo</th>
-          <th>Título</th><th>Cliente</th><th>Status</th>
-          <th>Data Abertura</th><th>Data Fechamento</th><th>Chamado</th>
+          <th>Ticket</th>
+          <th>Atendente</th>
+          <th>Razão Social</th><th>Tipo</th>
+          <th>Título</th>
+          <th>Cliente</th>
+          <th>Status</th>
+          <th>Criticidade</th>
+          <th>Data Abertura</th>
+          <th>Data Fechamento</th>
+          <th>Chamado</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -133,6 +142,7 @@ function preencherTabela(linhas) {
       <td class="tabela-titulo">${tituloCol}</td>
       <td>${item.cliente == 1 ? "✅" : "❌"}</td>
       <td>${firstUpper(item.status)}</td>
+      <td>${firstUpper(item.criticidade)}</td>
       <td>${dataBr(item.data_abertura)}</td>
       <td>${dataBr(item.data_fechamento)}</td>
       <td>${chamado}</td>`;

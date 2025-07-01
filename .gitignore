@@ -1,5 +1,8 @@
 dados.env
 node_modules/
 .env
+videos.json
+gerarEmbeddingVideo.js
+buscarVideos.js
 
 

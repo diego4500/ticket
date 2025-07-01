@@ -175,9 +175,51 @@ app.get('/buscar-ticket', autenticado, (req, res) => {
   let valores = [];
 
   termos.forEach(termo => {
-    const like = `%${termo}%`;
-    query += `
-      AND (
+    let condicao = '';
+    let isChave = false;
+
+    // Criticidade
+    if (['baixa', 'media', 'alta', 'urgente'].includes(termo)) {
+      condicao = `criticidade LIKE ?`;
+      valores.push(`%${termo}%`);
+      isChave = true;
+    }
+    // Criticidade preenchida
+    else if (termo === 'criticidade') {
+      condicao = `criticidade IS NOT NULL AND criticidade != ''`;
+      isChave = true;
+    }
+    // Bug
+    else if (termo === 'bug') {
+      condicao = `bug = 1`;
+      isChave = true;
+    }
+    // Melhoria
+    else if (termo === 'melhoria') {
+      condicao = `melhoria = 1`;
+      isChave = true;
+    }
+    // Status
+    else if (termo === 'aberto' || termo === 'fechado') {
+      condicao = `status LIKE ?`;
+      valores.push(`%${termo}%`);
+      isChave = true;
+    }
+    // Cliente (pode ser 1 ou 0, adapte conforme usa checkbox/tinyint)
+    else if (termo === 'cliente') {
+      condicao = `cliente = 1`;
+      isChave = true;
+    }
+    // Tipo
+    else if (['duvida', 'funcionalidade', 'churn', 'sistema'].includes(termo)) {
+      condicao = `tipo LIKE ?`;
+      valores.push(`%${termo}%`);
+      isChave = true;
+    }
+
+    // Termo amplo, busca em várias colunas
+    if (!isChave) {
+      condicao = `
         ticket = ? OR
         razao_social LIKE ? OR
         nome_fantasia LIKE ? OR
@@ -190,18 +232,18 @@ app.get('/buscar-ticket', autenticado, (req, res) => {
         atendente LIKE ? OR
         criticidade LIKE ? OR
         card LIKE ?
-        ${termo === "bug"        ? "OR bug = 1"        : ""}
-        ${termo === "melhoria"   ? "OR melhoria = 1"   : ""}
-        ${termo === "impeditivo" ? "OR impeditivo = 1" : ""}
-      )
-    `;
-    valores.push(
-      termo,
-      like, like, like,
-      like, like, like,
-      like, like,
-      like, like, like
-    );
+      `;
+      valores.push(
+        termo,
+        `%${termo}%`, `%${termo}%`, `%${termo}%`,
+        `%${termo}%`, `%${termo}%`, `%${termo}%`,
+        `%${termo}%`, `%${termo}%`, `%${termo}%`,
+        `%${termo}%`, `%${termo}%`
+      );
+    }
+
+    // Sempre encapsula para não dar conflito de múltiplos termos
+    query += ` AND (${condicao})`;
   });
 
   query += ` ORDER BY id DESC LIMIT ? OFFSET ?`;
@@ -212,7 +254,6 @@ app.get('/buscar-ticket', autenticado, (req, res) => {
       console.error("Erro na busca:", err);
       return res.status(500).json([]);
     }
-
     res.json(resultados);
   });
 });
