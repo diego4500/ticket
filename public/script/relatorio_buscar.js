@@ -125,6 +125,23 @@ function preencherTabela(linhas) {
       default:                 // qualquer outro tipo
         tituloCol = item.titulo ?? "-";
     }
+    let tipo = item.tipo;
+    
+
+    if(item.bug == 1 && item.tipo === "duvida" || item.tipo ==="dúvida"){
+      tituloCol = item.titulo
+      tipo = "Bug"
+    }
+
+    if(item.melhoria == 1 && item.tipo === "duvida" || item.tipo ==="dúvida"){
+      tituloCol = item.titulo
+      tipo = "Melhoria"
+    }
+
+    if(item.melhoria == 1 && item.tipo === "funcionalidade"){    
+      tituloCol = item.titulo
+      tipo = "Melhoria"
+    }
 
     /* --- link do chamado -------------------------------------------------- */
     const chamado = item.chamado?.includes("chat.azpost.com.br")
@@ -138,7 +155,7 @@ function preencherTabela(linhas) {
       <td>${item.ticket}</td>
       <td>${firstUpper(item.atendente)}</td>
       <td class="razao-social">${item.razao_social}</td>
-      <td>${firstUpper(item.tipo)}</td>
+      <td>${firstUpper(tipo)}</td>
       <td class="tabela-titulo">${tituloCol}</td>
       <td>${item.cliente == 1 ? "✅" : "❌"}</td>
       <td>${firstUpper(item.status)}</td>

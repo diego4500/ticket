@@ -775,6 +775,7 @@ app.get('/exportar-excel-razao-social', autenticado, async (req, res) => {
         dia_vencimento,
         data_vencimento,
         qt_licenca,
+        forma_pagamento,
         sem_acesso,
         faturamento
       FROM razao_social
@@ -804,6 +805,7 @@ app.get('/exportar-excel-razao-social', autenticado, async (req, res) => {
         { key: "dia_vencimento", header: "Dia Vencimento" },
         { key: "data_vencimento", header: "Data Vencimento" },
         { key: "qt_licenca", header: "Qtd Licença" },
+        { key: "forma_pagamento", header: "Forma de Pagamento" },
         { key: "sem_acesso", header: "Sem Acesso" },
         { key: "faturamento", header: "Faturamento" },
       ];
@@ -1299,6 +1301,89 @@ app.post('/importar-razao-social', upload.single('arquivo'), (req, res) => {
     res.status(500).json({ sucesso: false, erro: 'Erro ao importar razão social' });
   }
 });
+
+// importar dados assinatura guru
+
+
+
+// Função para remover acentos e deixar minúsculo
+function removerAcentos(texto) {
+  if (!texto) return "";
+  return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
+// Função para converter data do formato BR para ISO (MySQL)
+function converterParaISO(dataBR) {
+  if (!dataBR) return null;
+  const partes = dataBR.split('/');
+  if (partes.length !== 3) return null;
+  // partes[2] = ano, partes[1] = mês, partes[0] = dia
+  return `${partes[2]}-${partes[1]}-${partes[0]}`;
+}
+
+app.post('/importar_guru', upload.single('arquivo'), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ erro: "Arquivo não enviado" });
+    }
+
+    const workbook = xlsx.readFile(req.file.path);
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    const dados = xlsx.utils.sheet_to_json(worksheet, { defval: "" });
+
+    let totalAtualizados = 0;
+
+    dados.forEach((linha, i) => {
+      const cnpj = linha["doc contato"];
+      const dataFimCiclo = linha["data fim ciclo"];
+      let pagamento = linha["pagamento"];
+
+      if (!cnpj) return;
+
+      pagamento = removerAcentos(pagamento);
+      const dataVencimentoISO = converterParaISO(dataFimCiclo);
+
+      db.query(
+        "SELECT cnpj FROM razao_social WHERE cnpj = ? LIMIT 1",
+        [cnpj],
+        (err, results) => {
+          if (err) {
+            console.error("Erro ao consultar banco:", err);
+            return;
+          }
+          if (results && results.length > 0) {
+            db.query(
+              "UPDATE razao_social SET data_vencimento = ?, forma_pagamento = ? WHERE cnpj = ?",
+              [dataVencimentoISO, pagamento, cnpj],
+              (erro, resultadoUpdate) => {
+                if (erro) {
+                  console.error("Erro ao atualizar:", erro);
+                } else {
+                  totalAtualizados++;
+                  console.log(`Atualizado: ${cnpj} | data_vencimento: ${dataVencimentoISO} | forma_pagamento: ${pagamento}`);
+                }
+              }
+            );
+          }
+        }
+      );
+    });
+
+    fs.unlink(req.file.path, () => {});
+    res.json({ sucesso: true, mensagem: 'Importação e atualização iniciada. Veja o console para detalhes.' });
+
+  } catch (err) {
+    console.error("Erro ao importar Guru:", err);
+    res.status(500).json({ erro: "Erro ao processar o arquivo" });
+  }
+});
+
+
+
+
+
+
 
 
 // excel apresentacao
@@ -2304,6 +2389,7 @@ app.get('/listar-razao-social', (req, res) => {
       DATE_FORMAT(data_cliente, '%Y-%m-%d') AS data_cliente,
       DATE_FORMAT(data_vencimento, '%Y-%m-%d') AS data_vencimento,
       sem_acesso,
+      forma_pagamento,
       faturamento
     FROM razao_social
   `;
@@ -2352,7 +2438,8 @@ app.get('/dados-completos-razao-social', (req, res) => {
       observacao,
       dia_vencimento,
       DATE_FORMAT(data_vencimento, '%Y-%m-%d') AS data_vencimento,
-      qt_licenca
+      qt_licenca,
+      forma_pagamento
     FROM razao_social
     WHERE razao_social = ?
     LIMIT 1
@@ -2391,7 +2478,8 @@ app.post('/atualizar-razao-social', (req, res) => {
     observacao,
     dia_vencimento,
     data_vencimento,
-    qt_licenca
+    qt_licenca,
+    forma_pagamento
   } = req.body;
 
   if (!id || !razao_social || !cnpj) {
@@ -2422,7 +2510,8 @@ app.post('/atualizar-razao-social', (req, res) => {
       observacao = ?,
       dia_vencimento = ?,
       data_vencimento = ?,
-      qt_licenca = ?
+      qt_licenca = ?,
+      forma_pagamento = ?
     WHERE id = ?
   `;
 
@@ -2442,6 +2531,7 @@ app.post('/atualizar-razao-social', (req, res) => {
     diaFinal,
     dataVencimentoFinal,
     licencaFinal,
+    forma_pagamento,
     id
   ], (err, resultado) => {
     if (err) {

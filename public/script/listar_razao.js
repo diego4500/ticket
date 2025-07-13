@@ -55,6 +55,7 @@ async function carregarTabelaRazoesSociais(reset = false) {
             <th style="padding: 10px;">CNPJ</th>
             <th style="padding: 10px;">Cliente</th>
             <th style="padding: 10px;">Data Cliente</th>
+            <th style="padding: 10px;">Forma de Pagamento</th>
             <th style="padding: 10px;">Vence em:</th>
             <th style="padding: 10px;">Dias Sem Acesso</th>
             <th style="padding: 10px;">Faturamento</th>
@@ -84,6 +85,7 @@ if (item.cliente == 1 && vencimento < hoje) {
         <td style="background:rgb(252, 219, 219); text-align: center; padding: 10px;">${formatarCNPJ(item.cnpj)}</td>
         <td style="background:rgb(252, 219, 219); text-align: center; padding: 10px;">${item.cliente == 1 ? '✅' : '❌'}</td>
         <td style="background:rgb(252, 219, 219); text-align: center; padding: 10px;">${formatarDataBR(item.data_cliente) || '-'}</td>
+        <td style="background:rgb(252, 219, 219); text-align: center; padding: 10px;">${item.forma_pagamento || '-'}</td>
         <td style="background:rgb(252, 219, 219); text-align: center; padding: 10px;">${formatarDataBR(item.data_vencimento) || '-'}</td>
         <td style="background:rgb(252, 219, 219); text-align: center; padding: 10px;">${item.sem_acesso || '-'}</td>
         <td style="background:rgb(252, 219, 219); text-align: center; padding: 10px;">${item.faturamento || '-'}</td>
@@ -97,6 +99,7 @@ if (item.cliente == 1 && vencimento < hoje) {
         <td style="text-align: center; padding: 10px;">${formatarCNPJ(item.cnpj)}</td>
         <td style="text-align: center; padding: 10px;">${item.cliente == 1 ? '✅' : '❌'}</td>
         <td style="text-align: center; padding: 10px;">${formatarDataBR(item.data_cliente) || '-'}</td>
+        <td style="text-align: center; padding: 10px;">${item.forma_pagamento || '-'}</td>
         <td style="text-align: center; padding: 10px;">${formatarDataBR(item.data_vencimento) || '-'}</td>
         <td style="text-align: center; padding: 10px;">${item.sem_acesso || '-'}</td>
           <td style="text-align: center; padding: 10px;">${item.faturamento || '-'}</td>
@@ -302,6 +305,10 @@ if (botaoCarregarMais) {
                 <label>Quantidade de licença:</label>
                 <input type="number" id="qt_licenca" min="1" max="31" step="1" style="width: 45px; font-size: 25px; margin-left: 20px;">
               </div>
+              <div class="campo">
+                <label>Forma de Pagamento:</label>
+                <input type="text" id="forma_pagamento" min="1" max="31" step="1" style="width: 150px; font-size: 15px; margin-left: 20px;">
+              </div>
             </div>
             </div>
           </div>
@@ -327,6 +334,7 @@ const checkboxCliente = document.getElementById('clienteB');
 document.getElementById('dia').value = dados.dia_vencimento || '';
 document.getElementById('vencimento').value = dados.data_vencimento || '';
 document.getElementById('qt_licenca').value = dados.qt_licenca || '';
+document.getElementById('forma_pagamento').value = dados.forma_pagamento || '';
 
 
 checkboxCliente.addEventListener('change', () => {
@@ -390,7 +398,8 @@ if (checkboxCliente.checked) {
             observacao: document.getElementById('observacao').value.trim(),
             dia_vencimento: document.getElementById('dia').value,
             data_vencimento: document.getElementById('vencimento').value,
-            qt_licenca: document.getElementById('qt_licenca').value
+            qt_licenca: document.getElementById('qt_licenca').value,
+            forma_pagamento: document.getElementById('forma_pagamento').value
           };
           
           try {
