@@ -1,13 +1,4 @@
-/* ======================  RELATORIO_BUSCAR.JS  ====================== */
-const inputBusca      = document.getElementById("inputBuscaTicket");
-const lupa            = document.getElementById("lupa");
-const container       = document.getElementById("tabela-relatorio");
-const msg             = document.getElementById("mensagem-relatorio");
-const btnCarregar     = document.getElementById("botaoCarregarMais");
-const modal           = document.getElementById("modal");
-const conteudoModal   = document.getElementById("conteudoModal");
-const btnFecharModal  = document.getElementById("fecharBotao");
-const btnSalvarModal  = document.getElementById("salvarEdicao");
+
 
 let paginaAtual       = 1;
 const limitePorPagina = 50;
@@ -32,6 +23,17 @@ function esperarElemento(seletor) {
 
 
 document.addEventListener("DOMContentLoaded", async () => {
+/* ======================  RELATORIO_BUSCAR.JS  ====================== */
+
+const lupa            = document.getElementById("lupa");
+const container       = document.getElementById("tabela-relatorio");
+const msg             = document.getElementById("mensagem-relatorio");
+const btnCarregar     = document.getElementById("botaoCarregarMais");
+const modal           = document.getElementById("modal");
+const conteudoModal   = document.getElementById("conteudoModal");
+const btnFecharModal  = document.getElementById("fecharBotao");
+const btnSalvarModal  = document.getElementById("salvarEdicao");
+
   const inputBusca = await esperarElemento("#inputBuscaTicket");
 
   const params = new URLSearchParams(window.location.search);
@@ -52,14 +54,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   } else {
     buscarTickets();
   }
-});
 
-
-
-/* ------------------------------------------------------------------ */
-/* Helpers                                                            */
-/* ------------------------------------------------------------------ */
-const firstUpper = t => (!t ? "" : t
+  const firstUpper = t => (!t ? "" : t
   .toLowerCase()
   .split(" ")
   .map(p => p.charAt(0).toUpperCase() + p.slice(1))
@@ -435,3 +431,11 @@ function formataCNPJ(valor) {
 // ► NOVO: converte “2025-05-10T03:00:00.000Z” → “10/05/2025”
 
 
+
+});
+
+
+
+/* ------------------------------------------------------------------ */
+/* Helpers                                                            */
+/* ------------------------------------------------------------------ */
