@@ -14,18 +14,35 @@ const limitePorPagina = 50;
 let ultimoLote        = 0;
 let ticketEmEdicao    = null;
 
-document.addEventListener("DOMContentLoaded", () => {
+// Utilitário para aguardar elemento no DOM com Promise
+function esperarElemento(seletor) {
+  return new Promise(resolve => {
+    const el = document.querySelector(seletor);
+    if (el) return resolve(el);
+    const obs = new MutationObserver(() => {
+      const el = document.querySelector(seletor);
+      if (el) {
+        obs.disconnect();
+        resolve(el);
+      }
+    });
+    obs.observe(document.body, {childList: true, subtree: true});
+  });
+}
+
+
+document.addEventListener("DOMContentLoaded", async () => {
+  const inputBusca = await esperarElemento("#inputBuscaTicket");
+
   const params = new URLSearchParams(window.location.search);
   const status = params.get('status');
   const atendente = params.get('atendente');
   const termo = params.get('termo');
 
   let busca = "";
-
   if (status) busca += status + " ";
   if (atendente) busca += atendente + " ";
   if (termo) busca += termo + " ";
-
   busca = busca.trim();
 
   if (busca) {
