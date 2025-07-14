@@ -14,6 +14,31 @@ const limitePorPagina = 50;
 let ultimoLote        = 0;
 let ticketEmEdicao    = null;
 
+document.addEventListener("DOMContentLoaded", () => {
+  const params = new URLSearchParams(window.location.search);
+  const status = params.get('status');
+  const atendente = params.get('atendente');
+  const termo = params.get('termo');
+
+  let busca = "";
+
+  if (status) busca += status + " ";
+  if (atendente) busca += atendente + " ";
+  if (termo) busca += termo + " ";
+
+  busca = busca.trim();
+
+  if (busca) {
+    inputBusca.value = busca;
+    paginaAtual = 1;
+    buscarTickets();
+  } else {
+    buscarTickets();
+  }
+});
+
+
+
 /* ------------------------------------------------------------------ */
 /* Helpers                                                            */
 /* ------------------------------------------------------------------ */
