@@ -389,7 +389,7 @@ travarSalvar();
 });
 
 /* ------------------------------------------------------------------ */
-buscarTickets();
+
 
 /* ====================== EXPORTAR EXCEL ============================ */
 document.getElementById("exportar_excelB").addEventListener("change", e=>{
