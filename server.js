@@ -1,7 +1,5 @@
 require('dotenv').config({ path: 'dados.env' });
-
 console.log("🟢 DB_USER carregado:", process.env.DB_USER);
-
 const express = require('express');
 const mysql = require('mysql2');
 const cors = require('cors');
@@ -9,13 +7,23 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const session = require('express-session');
 const bcrypt = require('bcrypt');
-
-
-
+const { OpenAI } = require("openai");
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const fetch = require('node-fetch');
 const fs = require("fs");
 const multer = require("multer");
 const xlsx = require("xlsx");
 const csv = require("csv-parser");
+
+// funçao cosseno
+
+function cosineSimilarity(vecA, vecB) {
+  const dotProduct = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
+  const magnitudeA = Math.sqrt(vecA.reduce((sum, a) => sum + a * a, 0));
+  const magnitudeB = Math.sqrt(vecB.reduce((sum, b) => sum + b * b, 0));
+  return magnitudeA && magnitudeB ? dotProduct / (magnitudeA * magnitudeB) : 0;
+}
+
 
 
 const storage = multer.diskStorage({
@@ -347,6 +355,9 @@ app.get('/dashboard_tv', autenticado, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'dashboard_tv.html'));
 });
 
+app.get('/video_suporte',  (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'video_suporte.html'));
+});
 
 
 
@@ -378,6 +389,334 @@ app.get('/tickets', (req, res) => {
     }
   });
 });
+
+// Listar vídeos
+
+
+// Ebmbedding descrição
+async function gerarEmbedding(texto) {
+  try {
+    const response = await openai.embeddings.create({
+      model: "text-embedding-3-small", // modelo mais novo e melhor
+      input: texto,
+      encoding_format: "float" // necessário para os modelos text-embedding-3
+    });
+    return response.data[0].embedding;
+  } catch (error) {
+    console.error("Erro ao gerar embedding:", error);
+    throw error;
+  }
+}
+
+
+// buscar video embedding
+
+
+
+app.post("/buscar-video-embedding", async (req, res) => {
+  const { pergunta } = req.body;
+  if (!pergunta) return res.status(400).json({ erro: "Pergunta ausente" });
+
+  let vetorPergunta;
+  try {
+    vetorPergunta = await gerarEmbedding(pergunta);
+  } catch (err) {
+    console.error("Erro ao gerar embedding:", err);
+    return res.status(500).json({ erro: "Erro no embedding" });
+  }
+
+  db.query("SELECT * FROM video_suporte WHERE descricao_vetorizada IS NOT NULL", (err, rows) => {
+    if (err) {
+      console.error("Erro no banco:", err);
+      return res.status(500).json({ erro: "Erro ao buscar vídeos" });
+    }
+
+    const resultados = rows
+      .map(video => {
+        let vetorDescricao = [];
+
+        const valor = video.descricao_vetorizada;
+
+        if (Array.isArray(valor)) {
+          vetorDescricao = valor; // já está em array
+        } else if (typeof valor === 'string') {
+          try {
+            vetorDescricao = JSON.parse(valor); // tenta como JSON
+          } catch {
+            vetorDescricao = valor.split(',').map(Number); // tenta como CSV
+          }
+        }
+
+        const score = cosineSimilarity(vetorPergunta, vetorDescricao);
+        return { ...video, score };
+      })
+      .filter(v => v.score >= 0.5)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 10);
+
+    res.json(resultados);
+  });
+});
+
+
+
+// ouvir resumo api google
+
+app.get('/ouvir-resumo/:id', async (req, res) => {
+  const id = req.params.id;
+  const sql = `SELECT resumo FROM video_suporte WHERE id = ?`;
+
+  db.query(sql, [id], async (err, resultados) => {
+    if (err || resultados.length === 0) {
+      return res.status(500).send("Erro ao buscar resumo.");
+    }
+
+    const resumo = resultados[0].resumo;
+    if (!resumo || resumo.trim() === "") {
+      return res.status(400).send("Resumo não disponível.");
+    }
+
+    try {
+      const resposta = await fetch(`https://texttospeech.googleapis.com/v1/text:synthesize?key=${process.env.GOOGLE_TTS_KEY}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          input: { text: resumo },
+          voice: {
+            languageCode: 'pt-BR',
+            name: 'pt-BR-Chirp3-HD-Zephyr',
+            ssmlGender: 'FEMALE'
+          },
+          audioConfig: { audioEncoding: 'MP3' }
+        })
+      });
+
+      const dados = await resposta.json();
+      if (!dados.audioContent) {
+        return res.status(500).send("Erro ao gerar áudio.");
+      }
+
+      const buffer = Buffer.from(dados.audioContent, 'base64');
+      res.set('Content-Type', 'audio/mpeg');
+      res.send(buffer);
+    } catch (erro) {
+      console.error("Erro na geração do áudio:", erro);
+      res.status(500).send("Erro interno ao gerar o áudio.");
+    }
+  });
+});
+
+
+// Gerar resumo
+
+async function gerarResumo(descricao) {
+  try {
+    const prompt = `Resuma o vídeo abaixo na faixa de 40 palavras, de maneira clara, direta e profissional:\n\n"${descricao}"\n\nResumo:`;
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo", // ou "gpt-4" se preferir
+      messages: [
+        { role: "system", content: "Você é um assistente especializado em resumos objetivos." },
+        { role: "user", content: prompt }
+      ],
+      max_tokens: 80,
+      temperature: 0.5
+    });
+    return response.choices[0].message.content.trim();
+  } catch (error) {
+    console.error("Erro ao gerar resumo:", error);
+    return ''; // Retorna vazio se falhar
+  }
+}
+
+
+app.get('/listar_videos', (req, res) => {
+  console.log('oi')
+  db.query('SELECT * FROM video_suporte ORDER BY id DESC', (error, results) => {
+    if (error) {
+      console.error('Erro ao listar vídeos:', error);
+      return res.status(500).json({ erro: 'Erro ao listar vídeos' });
+    }
+    res.json(results);
+  });
+});
+
+// contagem de click do video e artigo
+
+app.post("/incrementar-clique/:id", (req, res) => {
+  const { id } = req.params;
+
+  const sql = `
+    UPDATE video_suporte
+    SET contador_click = IFNULL(contador_click, 0) + 1
+    WHERE id = ?
+  `;
+
+  db.query(sql, [id], (err, result) => {
+    if (err) {
+      console.error("Erro ao incrementar contador:", err);
+      return res.status(500).json({ erro: "Erro ao atualizar contador" });
+    }
+
+    res.json({ sucesso: true });
+  });
+});
+
+// contador de vídeos
+
+app.get('/contar-videos', (req, res) => {
+  db.query('SELECT COUNT(*) AS total FROM video_suporte', (err, results) => {
+    if (err) {
+      console.error("Erro ao contar vídeos:", err);
+      return res.status(500).json({ erro: 'Erro ao contar vídeos' });
+    }
+    res.json({ total: results[0].total });
+  });
+});
+
+// feedback de vídeo não localizado
+app.post('/salvar-feedback', (req, res) => {
+  const { input_busca } = req.body;
+  if (!input_busca || input_busca.trim() === "") {
+    return res.status(400).json({ erro: "Busca vazia" });
+  }
+
+  const sql = "INSERT INTO video_feedback (input_busca) VALUES (?)";
+  db.query(sql, [input_busca], (err, result) => {
+    if (err) {
+      console.error("Erro ao salvar feedback:", err);
+      return res.status(500).json({ erro: "Erro ao salvar" });
+    }
+    res.json({ sucesso: true });
+  });
+});
+
+
+// Salvar vídeos
+
+app.post('/atualizar_video', async (req, res) => {
+  const { id, titulo, link_video, link_artigo, descricao } = req.body;
+
+  let embedding = null;
+  let resumo = '';
+  try {
+    if (descricao && descricao.trim() !== '') {
+      embedding = await gerarEmbedding(descricao);
+      resumo = await gerarResumo(descricao); // Gera o resumo também!
+    }
+  } catch (err) {
+    return res.status(500).json({ erro: "Erro ao gerar embedding ou resumo" });
+  }
+
+  const sql = `
+    UPDATE video_suporte SET 
+      titulo = ?, 
+      link_video = ?, 
+      link_artigo = ?, 
+      descricao = ?, 
+      descricao_vetorizada = ?,
+      resumo = ?
+    WHERE id = ?
+  `;
+
+  db.query(sql, [titulo, link_video, link_artigo, descricao, JSON.stringify(embedding), resumo, id], (err, result) => {
+    if (err) {
+      console.error('Erro SQL:', err);
+      return res.status(500).json({ erro: 'Erro ao atualizar vídeo' });
+    }
+
+    res.json({ sucesso: true });
+  });
+});
+
+
+
+// criar novo cadastro de vídeo
+app.post('/cadastrar_video', async (req, res) => {
+  const { titulo, link_video, link_artigo, descricao } = req.body;
+
+  let embedding = null;
+  let resumo = '';
+  try {
+    if (descricao && descricao.trim() !== '') {
+      embedding = await gerarEmbedding(descricao);
+      resumo = await gerarResumo(descricao); // Novo: gera o resumo!
+    }
+  } catch (err) {
+    return res.status(500).json({ erro: "Erro ao gerar embedding ou resumo" });
+  }
+
+  const sql = `
+    INSERT INTO video_suporte (titulo, link_video, link_artigo, descricao, descricao_vetorizada, resumo)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `;
+  db.query(sql, [titulo, link_video, link_artigo, descricao, JSON.stringify(embedding), resumo], (err, result) => {
+    if(err){
+      console.error('Erro SQL:', err);
+      return res.status(500).json({erro: 'Erro ao cadastrar vídeo'});
+    }
+    res.json({sucesso: true, id: result.insertId});
+  });
+});
+
+
+
+app.post('/excluir_video', (req, res) => {
+  console.log("🔍 Body recebido:", req.body); // ✅ veja o que está chegando
+
+  const { id } = req.body;
+  if (!id) return res.status(400).json({ erro: 'ID não informado' });
+
+  const sql = `DELETE FROM video_suporte WHERE id = ?`;
+  db.query(sql, [id], (err, result) => {
+    if (err) {
+      console.error('Erro SQL ao excluir:', err);
+      return res.status(500).json({ erro: 'Erro ao excluir vídeo' });
+    }
+    res.json({ sucesso: true });
+  });
+});
+
+const textToSpeech = require('@google-cloud/text-to-speech');
+const util = require('util');
+// Cria o client
+const client = new textToSpeech.TextToSpeechClient();
+
+// Rota para ouvir o resumo
+app.get('/ouvir-resumo/:id', async (req, res) => {
+  const id = req.params.id;
+  const sql = `SELECT resumo FROM video_suporte WHERE id = ?`;
+
+  db.query(sql, [id], async (err, resultados) => {
+    if (err || resultados.length === 0) {
+      return res.status(500).send("Erro ao buscar resumo.");
+    }
+
+    const texto = resultados[0].resumo;
+    if (!texto) {
+      return res.status(400).send("Resumo não disponível.");
+    }
+
+    const request = {
+      input: { text: texto },
+      voice: { languageCode: 'pt-BR', ssmlGender: 'NEUTRAL' },
+      audioConfig: { audioEncoding: 'MP3' },
+    };
+
+    try {
+      const [response] = await client.synthesizeSpeech(request);
+      res.set('Content-Type', 'audio/mpeg');
+      res.send(response.audioContent);
+    } catch (e) {
+      console.error("Erro ao gerar áudio:", e);
+      res.status(500).send("Erro ao gerar áudio.");
+    }
+  });
+});
+
+
+
+
+
 
 // rota da página do login
 
@@ -2042,7 +2381,7 @@ app.get("/churns-por-razao", (req, res) => {
 });
 
 */
-const fetch = require("node-fetch");
+
 /*
 // cadastrar apresentacao
 app.post("/cadastrar-apresentacao", (req, res) => {

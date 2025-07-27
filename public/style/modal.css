@@ -38,8 +38,8 @@ input, select, textarea{
     padding:15px;
   }
   .item p{ margin:4px 0 0; }
-  strong{ color:#00f; font-family:Arial, sans-serif; font-size: 12px;}
-  p     { font-family:Arial, sans-serif; font-size: 12px;}
+  strong{ color:#00f; font-family:Arial, sans-serif; font-size: 16px;}
+  p     { font-family:Arial, sans-serif; font-size: 16px;}
   
   /* ---------- grid interno do bloco superior direito ------------------------ */
   .top-right{
@@ -52,13 +52,38 @@ input, select, textarea{
   }
   #descricaoEditavel{
       width: 97%;
-      height: 125px;
+      height: 244px;
       resize: none;
   }
   
   .impeditivo_div{
     display: none;
   }
+
+  .distancia_esquerda{
+    padding-left: 186px;
+  }
+
+  button {
+    margin-top: 0px !important;
+    margin-left: 15px !important;
+  }
+
+  .tabela-relatorio tbody tr {
+  cursor: pointer;
+}
+
+.buscarVideo{
+  width: 485px;
+  margin: 20px 0px 0px 26px;
+ 
+  display: flex;
+}
+
+.inputBuscarVideo{
+  width: 428px;
+}
+
 
 
 
@@ -122,10 +147,67 @@ input, select, textarea{
     font-size: 14px;
     color: #444;
   }
+
+  .ler {
+  background-color: #4a4a4a;  /* cinza escuro */
+  color: white;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  width: 37px !important
+}
+
+.ler:hover {
+  background-color: #333333;
+  opacity: 0.9;
+}
+
+
+  .modal-locsis-bodyC {
+    padding: 15px;
+    font-size: 14px;
+    color: #444;
+  }
+
+
+
   
   .modal-locsis-bodyB p {
     margin: 0;
   }
+
+  .direitaBotao {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end; /* joga o botão para a direita */
+  margin-top: 10px;
+  
+}
+
+#excluirEdicao {
+  width: 100%;
+  max-width: 200px; /* limita se quiser */
+  padding: 10px 20px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-right: 20px;
+}
+
+#excluirEdicao:hover {
+  background-color: #c82333;
+}
+
   
   .modal-locsis-bodyB strong {
     display: block;
