@@ -413,7 +413,7 @@ function renderizarTabelaRecomendacoes(lista) {
       </td>
       <td>${video.link_video ? `<a href="${video.link_video}" target="_blank" class="link-contador" data-id="${video.id}">Ver vídeo</a>` : ""}</td>
       <td>${video.link_artigo ? `<a href="${video.link_artigo}" target="_blank" class="link-contador" data-id="${video.id}">Ver artigo</a>` : ""}</td>     
-      <td>${((video.score - 0.5) * 1000).toFixed(1)}</td>
+      <td>${((video.score - 0.8) * 1000).toFixed(1)}</td>
 
 
     `;
@@ -444,6 +444,8 @@ function renderizarTabelaRecomendacoes(lista) {
     });
 }
 
+//<td>${((video.score - 0.5) * 1000).toFixed(1)}</td>
+
 function mostrarFeedback(event) {
     event.preventDefault(); // Impede navegação
 
@@ -461,7 +463,7 @@ function mostrarFeedback(event) {
 
 
 function enviarFeedback(event) {
-    console.log("oi 4500")
+    
     event.preventDefault();
 
     const input = document.getElementById("inputBuscaTicket");

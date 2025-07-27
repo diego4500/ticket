@@ -402,13 +402,14 @@ app.get('/tickets', (req, res) => {
 
 // Ebmbedding descrição
 async function gerarEmbedding(texto) {
+  console.log("teste")
   try {
-    const response = await openai.embeddings.create({
-      model: "text-embedding-3-small", // modelo mais novo e melhor
-      input: texto,
-      encoding_format: "float" // necessário para os modelos text-embedding-3
+    const response = await openai.createEmbedding({
+      model: "text-embedding-ada-002", // modelo suportado na versão 3.2.1
+      input: texto
     });
-    return response.data[0].embedding;
+
+    return response.data.data[0].embedding;
   } catch (error) {
     console.error("Erro ao gerar embedding:", error);
     throw error;
@@ -457,7 +458,7 @@ app.post("/buscar-video-embedding", async (req, res) => {
         const score = cosineSimilarity(vetorPergunta, vetorDescricao);
         return { ...video, score };
       })
-      .filter(v => v.score >= 0.5)
+      .filter(v => v.score >= 0.78)
       .sort((a, b) => b.score - a.score)
       .slice(0, 10);
 
