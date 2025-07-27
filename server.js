@@ -7,13 +7,20 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const session = require('express-session');
 const bcrypt = require('bcrypt');
-const { OpenAI } = require("openai");
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
 const fetch = require('node-fetch');
 const fs = require("fs");
 const multer = require("multer");
 const xlsx = require("xlsx");
 const csv = require("csv-parser");
+
+const { Configuration, OpenAIApi } = require("openai");
+
+const configuration = new Configuration({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+const openai = new OpenAIApi(configuration);
 
 // funçao cosseno
 
