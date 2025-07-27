@@ -362,7 +362,7 @@ app.get('/dashboard_tv', autenticado, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'dashboard_tv.html'));
 });
 
-app.get('/video_suporte',  (req, res) => {
+app.get('/video_suporte', autenticado, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'video_suporte.html'));
 });
 
