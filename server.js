@@ -520,21 +520,24 @@ app.get('/ouvir-resumo/:id', async (req, res) => {
 async function gerarResumo(descricao) {
   try {
     const prompt = `Resuma o vídeo abaixo na faixa de 40 palavras, de maneira clara, direta e profissional:\n\n"${descricao}"\n\nResumo:`;
-    const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo", // ou "gpt-4" se preferir
+
+    const response = await openai.createChatCompletion({
+      model: "gpt-3.5-turbo",
       messages: [
         { role: "system", content: "Você é um assistente especializado em resumos objetivos." },
         { role: "user", content: prompt }
       ],
-      max_tokens: 80,
+      max_tokens: 150,
       temperature: 0.5
     });
-    return response.choices[0].message.content.trim();
+
+    return response.data.choices[0].message.content.trim();
   } catch (error) {
     console.error("Erro ao gerar resumo:", error);
-    return ''; // Retorna vazio se falhar
+    return '';
   }
 }
+
 
 
 app.get('/listar_videos', (req, res) => {
@@ -640,14 +643,13 @@ app.post('/atualizar_video', async (req, res) => {
 
 // criar novo cadastro de vídeo
 app.post('/cadastrar_video', async (req, res) => {
-  const { titulo, link_video, link_artigo, descricao } = req.body;
-
+  const { titulo, link_video, link_artigo, descricao } = req.body;  
   let embedding = null;
   let resumo = '';
   try {
-    if (descricao && descricao.trim() !== '') {
-      embedding = await gerarEmbedding(descricao);
-      resumo = await gerarResumo(descricao); // Novo: gera o resumo!
+    if (descricao && descricao.trim() !== '') {      
+      embedding = await gerarEmbedding(descricao);     
+      resumo = await gerarResumo(descricao); // Novo: gera o resumo!      
     }
   } catch (err) {
     return res.status(500).json({ erro: "Erro ao gerar embedding ou resumo" });
