@@ -413,7 +413,7 @@ function renderizarTabelaRecomendacoes(lista) {
       </td>
       <td>${video.link_video ? `<a href="${video.link_video}" target="_blank" class="link-contador" data-id="${video.id}">Ver vídeo</a>` : ""}</td>
       <td>${video.link_artigo ? `<a href="${video.link_artigo}" target="_blank" class="link-contador" data-id="${video.id}">Ver artigo</a>` : ""}</td>     
-      <td>${((video.score - 0.8) * 1000).toFixed(1)}</td>
+      <td>${((video.score - 0.7) * 1000).toFixed(1)}</td>
 
 
     `;

@@ -65,7 +65,7 @@ const dbPromise = db.promise();
 setInterval(() => {
   db.query('SELECT 1', (err) => {
     if (err) console.error("🔴 Erro no ping de conexão:", err.message);
-    else console.log("🔁 Ping MySQL OK");
+    
   });
 }, 60000); // a cada 60 segundos
 
@@ -402,7 +402,7 @@ app.get('/tickets', (req, res) => {
 
 // Ebmbedding descrição
 async function gerarEmbedding(texto) {
-  console.log("teste")
+ 
   try {
     const response = await openai.createEmbedding({
       model: "text-embedding-ada-002", // modelo suportado na versão 3.2.1
@@ -428,6 +428,7 @@ app.post("/buscar-video-embedding", async (req, res) => {
   let vetorPergunta;
   try {
     vetorPergunta = await gerarEmbedding(pergunta);
+    console.log(`Embedding da pergunta ${vetorPergunta}`)
   } catch (err) {
     console.error("Erro ao gerar embedding:", err);
     return res.status(500).json({ erro: "Erro no embedding" });
@@ -458,9 +459,14 @@ app.post("/buscar-video-embedding", async (req, res) => {
         const score = cosineSimilarity(vetorPergunta, vetorDescricao);
         return { ...video, score };
       })
-      .filter(v => v.score >= 0.78)
+      .filter(v => v.score >= 0.82)
       .sort((a, b) => b.score - a.score)
       .slice(0, 10);
+       console.log("🔍 Resultados da busca:", resultados.map(r => ({
+      id: r.id,
+      titulo: r.titulo,
+      score: r.score
+    })));
 
     res.json(resultados);
   });
@@ -541,7 +547,7 @@ async function gerarResumo(descricao) {
 
 
 app.get('/listar_videos', (req, res) => {
-  console.log('oi')
+  
   db.query('SELECT * FROM video_suporte ORDER BY id DESC', (error, results) => {
     if (error) {
       console.error('Erro ao listar vídeos:', error);
@@ -648,7 +654,8 @@ app.post('/cadastrar_video', async (req, res) => {
   let resumo = '';
   try {
     if (descricao && descricao.trim() !== '') {      
-      embedding = await gerarEmbedding(descricao);     
+      embedding = await gerarEmbedding(descricao);
+      console.log(`Embedding do vídeo gerado: ${embedding}`)     
       resumo = await gerarResumo(descricao); // Novo: gera o resumo!      
     }
   } catch (err) {

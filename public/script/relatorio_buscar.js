@@ -359,9 +359,14 @@ const imp   = document.getElementById("impeditivo");
 const criticidadeEl = document.getElementById("criticidade");
 
 if (tCard) {
-  if (tCard.value === "bug"){}      payload.bug = 1;
-  if (tCard.value === "melhoria") payload.melhoria = 1;
+  if (tCard.value === "bug") {
+    payload.bug = 1;
+  }
+  if (tCard.value === "melhoria") {
+    payload.melhoria = 1;
+  }
 }
+
 if (imp) payload.impeditivo = Number(imp.value);
 if (criticidadeEl) payload.criticidade = criticidadeEl.value;
 
