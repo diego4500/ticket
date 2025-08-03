@@ -59,13 +59,13 @@ const db = mysql.createPool({
   queueLimit: 0
 });
 
-const dbPromise = db.promise(); 
+const dbPromise = db.promise();
 
 // Ping para manter o pool de conexões ativo
 setInterval(() => {
   db.query('SELECT 1', (err) => {
     if (err) console.error("🔴 Erro no ping de conexão:", err.message);
-    
+
   });
 }, 60000); // a cada 60 segundos
 
@@ -90,7 +90,7 @@ app.use(session({
 app.post('/salvar-ticket', (req, res) => {
   const { utcToZonedTime } = require('date-fns-tz');
   const { format } = require('date-fns');
-  
+
 
 
   const {
@@ -147,7 +147,7 @@ app.post('/salvar-ticket', (req, res) => {
 
   console.log("valores:", valores.length, valores);
   console.log("Total de colunas:", 21);
-console.log("Total de valores:", valores.length);
+  console.log("Total de valores:", valores.length);
 
   db.query(sql, valores, (err, result) => {
     if (err) {
@@ -402,7 +402,7 @@ app.get('/tickets', (req, res) => {
 
 // Ebmbedding descrição
 async function gerarEmbedding(texto) {
- 
+
   try {
     const response = await openai.createEmbedding({
       model: "text-embedding-ada-002", // modelo suportado na versão 3.2.1
@@ -462,7 +462,7 @@ app.post("/buscar-video-embedding", async (req, res) => {
       .filter(v => v.score >= 0.82)
       .sort((a, b) => b.score - a.score)
       .slice(0, 10);
-       console.log("🔍 Resultados da busca:", resultados.map(r => ({
+    console.log("🔍 Resultados da busca:", resultados.map(r => ({
       id: r.id,
       titulo: r.titulo,
       score: r.score
@@ -547,7 +547,7 @@ async function gerarResumo(descricao) {
 
 
 app.get('/listar_videos', (req, res) => {
-  
+
   db.query('SELECT * FROM video_suporte ORDER BY id DESC', (error, results) => {
     if (error) {
       console.error('Erro ao listar vídeos:', error);
@@ -649,13 +649,13 @@ app.post('/atualizar_video', async (req, res) => {
 
 // criar novo cadastro de vídeo
 app.post('/cadastrar_video', async (req, res) => {
-  const { titulo, link_video, link_artigo, descricao } = req.body;  
+  const { titulo, link_video, link_artigo, descricao } = req.body;
   let embedding = null;
   let resumo = '';
   try {
-    if (descricao && descricao.trim() !== '') {      
+    if (descricao && descricao.trim() !== '') {
       embedding = await gerarEmbedding(descricao);
-      console.log(`Embedding do vídeo gerado: ${embedding}`)     
+      console.log(`Embedding do vídeo gerado: ${embedding}`)
       resumo = await gerarResumo(descricao); // Novo: gera o resumo!      
     }
   } catch (err) {
@@ -667,11 +667,11 @@ app.post('/cadastrar_video', async (req, res) => {
     VALUES (?, ?, ?, ?, ?, ?)
   `;
   db.query(sql, [titulo, link_video, link_artigo, descricao, JSON.stringify(embedding), resumo], (err, result) => {
-    if(err){
+    if (err) {
       console.error('Erro SQL:', err);
-      return res.status(500).json({erro: 'Erro ao cadastrar vídeo'});
+      return res.status(500).json({ erro: 'Erro ao cadastrar vídeo' });
     }
-    res.json({sucesso: true, id: result.insertId});
+    res.json({ sucesso: true, id: result.insertId });
   });
 });
 
@@ -744,18 +744,18 @@ app.post('/atualizar-descricao', (req, res) => {
   console.log("📦 Corpo recebido:", req.body);
 
 
- let {
-  ticket,
-  descricao,
-  status,
-  card,
-  bug = 0,
-  melhoria = 0,
-  impeditivo = null,
-  criticidade = null // ⬅️ Verifique se isso EXISTE
-} = req.body;
+  let {
+    ticket,
+    descricao,
+    status,
+    card,
+    bug = 0,
+    melhoria = 0,
+    impeditivo = null,
+    criticidade = null // ⬅️ Verifique se isso EXISTE
+  } = req.body;
 
- console.log("🔍 Criticidade recebida:", criticidade);
+  console.log("🔍 Criticidade recebida:", criticidade);
 
 
 
@@ -772,7 +772,7 @@ app.post('/atualizar-descricao', (req, res) => {
 
   const isFechado = status.toLowerCase() === 'fechado';
 
-const camposBase = `
+  const camposBase = `
   descricao       = ?,
   status          = ?,
   card            = ?,
@@ -783,12 +783,12 @@ const camposBase = `
 `;
 
 
-const camposFechamento = `
+  const camposFechamento = `
   , data_fechamento = IF(data_fechamento IS NULL, CURDATE(), data_fechamento),
     hora_fechamento = IF(hora_fechamento IS NULL, CURTIME(), hora_fechamento)
 `;
 
-const sql = `
+  const sql = `
   UPDATE tickets SET
     ${camposBase}${isFechado ? camposFechamento : ''}
   WHERE ticket = ?
@@ -900,7 +900,7 @@ app.get('/tickets/abertos', (req, res) => {
 
 // Rota que exibe somente os abertos do banco de dados
 
-app.get('/tickets/fechados',  (req, res) => {
+app.get('/tickets/fechados', (req, res) => {
   const sql = `
     SELECT 
         ticket, 
@@ -1149,7 +1149,7 @@ app.get('/exportar-excel-razao-social', autenticado, async (req, res) => {
 
       // Define os cabeçalhos na ordem desejada
       const campos = [
-      
+
         { key: "razao_social", header: "Razão Social" },
         { key: "nome_fantasia", header: "Nome Fantasia" },
         { key: "cnpj", header: "CNPJ" },
@@ -1179,7 +1179,7 @@ app.get('/exportar-excel-razao-social', autenticado, async (req, res) => {
           if (col.key === "cnpj" && row[col.key]) {
             // formatação básica do CNPJ
             let cnpj = row[col.key].toString().replace(/\D/g, '').padStart(14, '0');
-            novo[col.key] = `${cnpj.substring(0,2)}.${cnpj.substring(2,5)}.${cnpj.substring(5,8)}/${cnpj.substring(8,12)}-${cnpj.substring(12,14)}`;
+            novo[col.key] = `${cnpj.substring(0, 2)}.${cnpj.substring(2, 5)}.${cnpj.substring(5, 8)}/${cnpj.substring(8, 12)}-${cnpj.substring(12, 14)}`;
           } else if (col.key === "cliente") {
             novo[col.key] = row[col.key] == 1 ? "Sim" : "Não";
           } else {
@@ -1537,7 +1537,7 @@ app.get('/exportar-excel-sistema', autenticado, async (req, res) => {
           key: field.name,
           width:
             field.name.includes('data') ? 12 :
-            field.name.includes('hora') ? 10 : 20
+              field.name.includes('hora') ? 10 : 20
         }));
 
       sheet.columns = camposFiltrados;
@@ -1701,8 +1701,12 @@ app.post('/importar_guru', upload.single('arquivo'), (req, res) => {
       const dataVencimentoISO = converterParaISO(dataFimCiclo);
 
       db.query(
-        "SELECT cnpj FROM razao_social WHERE cnpj = ? LIMIT 1",
-        [cnpj],
+        `SELECT cnpj, cnpj_guru 
+         FROM razao_social 
+          WHERE cnpj_guru = ? OR (cnpj_guru IS NULL OR cnpj_guru = '') AND cnpj = ? 
+     LIMIT 1`,
+        [cnpj, cnpj],
+
         (err, results) => {
           if (err) {
             console.error("Erro ao consultar banco:", err);
@@ -1710,8 +1714,11 @@ app.post('/importar_guru', upload.single('arquivo'), (req, res) => {
           }
           if (results && results.length > 0) {
             db.query(
-              "UPDATE razao_social SET data_vencimento = ?, forma_pagamento = ? WHERE cnpj = ?",
-              [dataVencimentoISO, pagamento, cnpj],
+              `UPDATE razao_social 
+              SET data_vencimento = ?, forma_pagamento = ? 
+              WHERE cnpj_guru = ? 
+              OR (cnpj_guru IS NULL OR cnpj_guru = '') AND cnpj = ?`,
+              [dataVencimentoISO, pagamento, cnpj, cnpj],
               (erro, resultadoUpdate) => {
                 if (erro) {
                   console.error("Erro ao atualizar:", erro);
@@ -1726,7 +1733,7 @@ app.post('/importar_guru', upload.single('arquivo'), (req, res) => {
       );
     });
 
-    fs.unlink(req.file.path, () => {});
+    fs.unlink(req.file.path, () => { });
     res.json({ sucesso: true, mensagem: 'Importação e atualização iniciada. Veja o console para detalhes.' });
 
   } catch (err) {
@@ -2190,7 +2197,7 @@ app.post('/logout', (req, res) => {
 // roda sugestão de funcionalidade 
 app.get("/sugestoes-funcionalidade", (req, res) => {
   const termo = (req.query.q || "").toLowerCase(); // ✅ primeiro define
-    const sql = `
+  const sql = `
   SELECT DISTINCT funcionalidade FROM funcionalidade_titulo
   WHERE LOWER(TRIM(funcionalidade)) LIKE ?
   LIMIT 20
@@ -2200,7 +2207,7 @@ app.get("/sugestoes-funcionalidade", (req, res) => {
     if (err) {
       console.error("Erro ao buscar funcionalidades:", err);
       console.error("Erro ao cadastrar:", err);
-return res.status(500).send("Erro interno: " + err.message);
+      return res.status(500).send("Erro interno: " + err.message);
 
     }
 
@@ -2685,7 +2692,7 @@ app.post('/importar_grafana', upload.single('arquivo'), (req, res) => {
 
         const cnpjEncontrado = (tenant.match(/\d{14}|\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}/) || [])[0];
 
-        
+
 
         if (cnpjEncontrado) {
           const cnpj = cnpjEncontrado.replace(/\D/g, '');
@@ -2783,6 +2790,7 @@ app.get('/dados-completos-razao-social', (req, res) => {
       razao_social,
       nome_fantasia,
       cnpj,
+      cnpj_guru,
       cliente,
       DATE_FORMAT(data_cliente, '%Y-%m-%d') AS data_cliente, 
       nome_a,
@@ -2823,6 +2831,7 @@ app.post('/atualizar-razao-social', (req, res) => {
     razao_social,
     nome_fantasia,
     cnpj,
+    cnpj_guru,
     cliente,
     data_cliente,
     nome_a,
@@ -2837,6 +2846,28 @@ app.post('/atualizar-razao-social', (req, res) => {
     qt_licenca,
     forma_pagamento
   } = req.body;
+
+  // 🔵 Log dos dados recebidos
+  console.log("📥 Dados recebidos para atualização:", {
+    id,
+    razao_social,
+    nome_fantasia,
+    cnpj,
+    cnpj_guru,
+    cliente,
+    data_cliente,
+    nome_a,
+    contato_a,
+    link_a,
+    nome_b,
+    contato_b,
+    link_b,
+    observacao,
+    dia_vencimento,
+    data_vencimento,
+    qt_licenca,
+    forma_pagamento
+  });
 
   if (!id || !razao_social || !cnpj) {
     return res.status(400).json({ erro: 'ID, razão social e CNPJ são obrigatórios.' });
@@ -2855,6 +2886,7 @@ app.post('/atualizar-razao-social', (req, res) => {
       razao_social = ?, 
       nome_fantasia = ?, 
       cnpj = ?, 
+      cnpj_guru = ?,
       cliente = ?, 
       data_cliente = ?, 
       nome_a = ?, 
@@ -2875,6 +2907,7 @@ app.post('/atualizar-razao-social', (req, res) => {
     razao_social,
     nome_fantasia,
     cnpj,
+    cnpj_guru,
     cliente,
     dataClienteFinal,
     nome_a,
@@ -3143,7 +3176,7 @@ app.put('/atualizar-data-churn', (req, res) => {
   const { id, novaData } = req.body;           // id do churn  +  yyyy-mm-dd
 
   if (!id || !novaData) {
-    return res.status(400).json({ sucesso:false, mensagem:'id ou data ausentes' });
+    return res.status(400).json({ sucesso: false, mensagem: 'id ou data ausentes' });
   }
 
   const sql = `
@@ -3155,9 +3188,9 @@ app.put('/atualizar-data-churn', (req, res) => {
   db.query(sql, [novaData, id], err => {
     if (err) {
       console.error('Erro ao atualizar data_churn:', err);
-      return res.status(500).json({ sucesso:false, mensagem:'erro interno' });
+      return res.status(500).json({ sucesso: false, mensagem: 'erro interno' });
     }
-    res.json({ sucesso:true });
+    res.json({ sucesso: true });
   });
 });
 
@@ -3212,7 +3245,7 @@ app.get('/buscar-churn-por-cnpj-data', (req, res) => {
 app.post("/cadastrar-churn", (req, res) => {
   const { razao_social, nome_fantasia, cnpj, data_churn } = req.body;
   if (!cnpj || !razao_social || !data_churn) {
-    return res.status(400).json({ sucesso:false, mensagem:"Dados incompletos." });
+    return res.status(400).json({ sucesso: false, mensagem: "Dados incompletos." });
   }
 
   const cnpjLimpo = cnpj.replace(/\D/g, '');
@@ -3224,7 +3257,7 @@ app.post("/cadastrar-churn", (req, res) => {
        WHERE REPLACE(REPLACE(REPLACE(REPLACE(cnpj,'.',''),'-',''),'/',''),' ','') = ?
        LIMIT 1`;
   db.query(sqlBusca, [cnpjLimpo], (err, rows) => {
-    if (err) return res.status(500).json({sucesso:false,mensagem:"Erro ao buscar data_cliente."});
+    if (err) return res.status(500).json({ sucesso: false, mensagem: "Erro ao buscar data_cliente." });
 
     const data_cliente = rows.length ? rows[0].data_cliente : null;
 
@@ -3235,7 +3268,7 @@ app.post("/cadastrar-churn", (req, res) => {
     db.query(sqlInsert,
       [razao_social, nome_fantasia, cnpjLimpo, data_churn, data_cliente],
       (err2) => {
-        if (err2) return res.status(500).json({sucesso:false,mensagem:"Erro ao salvar churn."});
+        if (err2) return res.status(500).json({ sucesso: false, mensagem: "Erro ao salvar churn." });
 
         /* 3.‑ marca cliente = 0 na tabela razao_social 🆕 ------------------- */
         const sqlUpdate = `
@@ -3247,7 +3280,7 @@ app.post("/cadastrar-churn", (req, res) => {
             console.error("⚠️  Churn salvo, mas não foi possível atualizar 'cliente' na tabela razao_social:", err3);
           }
           /* 4.‑ resposta final --------------------------------------------- */
-          res.json({ sucesso:true });
+          res.json({ sucesso: true });
         });
       });
   });

@@ -1105,7 +1105,7 @@ table.tabela-relatorio th {
   /* Modal cadastro de razao */
 
   .modal-mod {
-    width: 1060px;
+    width: 1121px;
     background: white;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.2);
@@ -1156,7 +1156,7 @@ table.tabela-relatorio th {
   .conteudoModalB{
     background:#fff;  
      
-    max-height:90vh; 
+    max-height:92vh; 
     overflow:auto;
   }
 
@@ -1166,6 +1166,10 @@ table.tabela-relatorio th {
 
   .inputMedio{
     width: 350px;
+  }
+
+  .inputCnpj{
+    width: 150px;
   }
 
   .checkboxRazao{    

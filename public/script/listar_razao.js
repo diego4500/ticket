@@ -233,7 +233,7 @@ if (botaoCarregarMais) {
             
               <div class="campo">
                 <label>CNPJ *:</label>
-                <input type="text" id="cnpj" class="inputMedio" value="${formatarCNPJ(dados.cnpj) || ''}" required>
+                <input type="text" id="cnpj" class="inputCnpj" value="${formatarCNPJ(dados.cnpj) || ''}" required>
               </div>
             </div>
             <div class="flexModal">
@@ -308,6 +308,10 @@ if (botaoCarregarMais) {
               <div class="campo">
                 <label>Forma de Pagamento:</label>
                 <input type="text" id="forma_pagamento" min="1" max="31" step="1" style="width: 150px; font-size: 15px; margin-left: 20px;">
+              </div>
+              <div class="campo">
+                <label>CNPJ Guru:</label>
+                <input type="text" id="cnpj_guru" class="inputCnpj" value="${formatarCNPJ(dados.cnpj_guru) || ''}">
               </div>
             </div>
             </div>
@@ -387,6 +391,7 @@ if (checkboxCliente.checked) {
             razao_social: document.getElementById('razao_social').value.trim(),
             nome_fantasia: document.getElementById('nome_fantasia').value.trim(),
             cnpj: document.getElementById('cnpj').value.replace(/\D/g, ''),
+            cnpj_guru: document.getElementById('cnpj_guru').value.replace(/\D/g, ''),
             cliente: document.getElementById('clienteB').checked ? 1 : 0,
             data_cliente: document.getElementById('data_cliente').value,
             nome_a: document.getElementById('nomeA').value.trim(),
